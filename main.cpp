@@ -14,7 +14,7 @@ using namespace std;
 
 int main(int argc,char** argv)
 {
-   string infilename="test.bmp";  /* Name of the input image */
+   string infilename="test2.bmp";  /* Name of the input image */
    string dirfilename=""; /* Name of the output gradient direction image */
    string outfilename;    /* Name of the output "edge" image */
    string composedfname;  /* Name of the output "direction" image */
@@ -31,8 +31,8 @@ int main(int argc,char** argv)
 
     Hough hough(infilename);
     hough.gaussian_smooth();
-    //hough.edge_detect();
-    hough.load_edge();
+    hough.edge_detect();
+    //hough.load_edge();
     hough.find_point();
 
     return 0;

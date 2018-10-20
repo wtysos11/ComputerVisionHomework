@@ -84,8 +84,7 @@ void Hough::edge_detect(void)
             }
         }
     }
-    edge.save("edge.bmp");
-    hough_space.save("hough.bmp");
+    edge.display();
 }
 
 void Hough::load_edge(void)
@@ -98,6 +97,7 @@ void Hough::find_point(void)
 {
     Area area;
     vector<Point> coordinate = vector<Point>();
+    vector<Line> lines = vector<Line>();
     cimg_forXY(hough_space,angle,p)
     {
         if(hough_space(angle,p)>=THRESHOLD)
@@ -157,18 +157,40 @@ void Hough::find_point(void)
 
         cout<<"line "<<i<<" measured by point ("<<angle<<","<<polar<<") with times "<<coordinate[i].value<<endl;
         cout<<"y = "<<m<<"x+"<<b<<endl;
-        const double color[] = {255,0,255};
+        lines.push_back(Line(m,b));
+        const double blue[] = {0,0,255};
 
         if(abs(m)>1)
         {
-            result.draw_line(x0,ymin,x1,ymax,color);
+            result.draw_line(x0,ymin,x1,ymax,blue);
         }
         else{
-            result.draw_line(xmin,y0,xmax,y1,color);
+            result.draw_line(xmin,y0,xmax,y1,blue);
         }
 
     }
 
+    //intersection point of two lines
+    cout<<"intersection"<<endl;
+    for(unsigned int i = 0 ;i<lines.size();i++)
+    {
+        for(unsigned int j = i+1 ;j<lines.size();j++)
+        {
+            double m0 = lines[i].m;
+            double m1 = lines[j].m;
+            double b0 = lines[i].b;
+            double b1 = lines[j].b;
+
+            double x = -1.0*(b1-b0)/(m1-m0);
+            double y = m0*x+b0;
+            if(x>=0 && x<result.width() && y>=0 && y<result.height())
+            {
+                cout<<x<<" "<<y<<endl;
+                const double red[]={255,0,0};
+                result.draw_circle(x,y,5,red);
+            }
+        }
+    }
     result.display();
 }
 

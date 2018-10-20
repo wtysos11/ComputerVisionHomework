@@ -11,9 +11,9 @@ struct Point{
 };
 
 struct Line{
-    int m;
-    int b;
-    Line(int _m,int _b):m(_m),b(_b){};
+    double m;
+    double b;
+    Line(double _m,double _b):m(_m),b(_b){};
 };
 // this class can collect a list of points and divide them into several parts, return the average of x and y
 class Area
