@@ -8,6 +8,11 @@ struct Point{
     int y;
     int value;
     Point(int _x,int _y,int _mag):x(_x),y(_y),value(_mag){}
+    Point():x(0),y(0),value(0){}
+    bool operator<(const Point& rhs) const{
+        return value<rhs.value;
+    }
+
 };
 
 struct Line{

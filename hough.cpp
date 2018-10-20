@@ -97,7 +97,9 @@ void Hough::find_point(void)
 {
     Area area;
     vector<Point> coordinate = vector<Point>();
+    vector<int> numbers = vector<int>();
     vector<Line> lines = vector<Line>();
+
     cimg_forXY(hough_space,angle,p)
     {
         if(hough_space(angle,p)>=THRESHOLD)
@@ -116,7 +118,44 @@ void Hough::find_point(void)
             y+=point[j].y;
             v+=point[j].value;
         }
-        coordinate.push_back(Point((int)x/point.size(),(int)y/point.size(),(int)v/point.size()));
+        if(coordinate.size()<EDG_NUM)
+        {
+            coordinate.push_back(Point((int)x/point.size(),(int)y/point.size(),(int)v/point.size()));
+            numbers.push_back(point.size());
+            int pointer = coordinate.size()-2;
+            if(pointer<0)
+                continue;
+            while(numbers[pointer]<numbers[pointer+1])
+            {
+                swap(numbers[pointer],numbers[pointer+1]);
+                swap(coordinate[pointer],coordinate[pointer+1]);
+                pointer--;
+                if(pointer<0)
+                {
+                    break;
+                }
+            }
+        }
+        else if(numbers[EDG_NUM-1]<point.size())
+        {
+            coordinate[EDG_NUM-1] = Point((int)x/point.size(),(int)y/point.size(),(int)v/point.size());
+            numbers[EDG_NUM-1] = point.size();
+            int pointer = coordinate.size()-2;
+            if(pointer<0)
+                continue;
+            while(numbers[pointer]<numbers[pointer+1])
+            {
+                swap(numbers[pointer],numbers[pointer+1]);
+                swap(coordinate[pointer],coordinate[pointer+1]);
+                pointer--;
+                if(pointer<0)
+                {
+                    break;
+                }
+            }
+        }
+
+
     }
 
     CImg<eleType> result(source);

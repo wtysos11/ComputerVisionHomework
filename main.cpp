@@ -14,7 +14,7 @@ using namespace std;
 
 int main(int argc,char** argv)
 {
-   string infilename="test2.bmp";  /* Name of the input image */
+   string infilename="test6.bmp";  /* Name of the input image */
    string dirfilename=""; /* Name of the output gradient direction image */
    string outfilename;    /* Name of the output "edge" image */
    string composedfname;  /* Name of the output "direction" image */
