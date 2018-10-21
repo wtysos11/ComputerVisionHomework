@@ -5,8 +5,9 @@ using namespace std;
 
 Hough::Hough(string str)
 {
+    filename = str;
     source = CImg<eleType>(str.c_str());
-    ans = CImg<eleType>(source);
+
 }
 
 
@@ -58,16 +59,21 @@ void Hough::edge_detect(void)
             }
         }
     }
-    //edge.display();
+    string edgefile = "edge"+filename;
+    edge.save(edgefile.c_str());
+    ans = CImg<eleType>(edge);
 }
 
 void Hough::find_circle(void)
 {
+    //debug
+    cout<<"in finding circle"<<endl;
     vector<pair<int,int> > voting_rank;
 
 // r from minR to max R, theta from 0 to 360, using hough transform to find circle center using vote method.
     for(int r = minR;r < maxR; r += 5)
     {
+        cout<<"radius check "<<r<<endl;
         CImg<eleType> hough_space(source.width(),source.height());
         cimg_forXY(edge,x,y)
         {
@@ -106,7 +112,8 @@ void Hough::find_circle(void)
          });
 
 // using the top N circles radius to find center.
-
+    //debug
+    cout<<"radius loops over"<<endl;
     vector<pair<int,int> > center;//store circle center
 
     for(unsigned int i = 0;i < CIRCLE_NUM;i++)
@@ -166,11 +173,15 @@ void Hough::find_circle(void)
             }
 
             const double color[]={0,0,255};
+            const double red [] = {255,0,0};
             center.push_back(make_pair(circleWeight[i].x,circleWeight[i].y));
             ans.draw_circle(circleWeight[i].x,circleWeight[i].y,radius,color);
+            ans.draw_circle(circleWeight[i].x,circleWeight[i].y,radius,red,1);
             cout<<"answer is "<<circleWeight[i].x<<" "<<circleWeight[i].y<<endl;
             break;
         }
     }
     ans.display();
+    string filename = "ans"+this->filename;
+    ans.save(filename.c_str());
 }

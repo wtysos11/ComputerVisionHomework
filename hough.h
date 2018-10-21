@@ -6,7 +6,7 @@
 using namespace std;
 using namespace cimg_library;
 
-#define CIRCLE_NUM 1
+#define CIRCLE_NUM 4
 #define GRADLIMIT 20 // use in edge detection for grad limit
 #define PI 3.1415926
 #define DIFF 100//judge whether two points are the same
@@ -38,8 +38,10 @@ private:
     CImg<eleType> hough_space;
 
     //some parameters use in finding circles
-    const int minR = 50;
-    const int maxR = 500;
+    //test2 180 240
+    const int minR = 180;
+    const int maxR = 240;
+    string filename;
 public:
     Hough(string str);
     void edge_detect(void);

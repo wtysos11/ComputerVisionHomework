@@ -6,7 +6,7 @@ using namespace cimg_library;
 
 int main(void)
 {
-    string infilename = "test1.bmp";
+    string infilename = "test2.bmp";
 
     Hough hough(infilename);
     hough.edge_detect();
