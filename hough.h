@@ -7,9 +7,9 @@ using namespace std;
 using namespace cimg_library;
 
 #define CIRCLE_NUM 4
-#define GRADLIMIT 20 // use in edge detection for grad limit
+#define GRADLIMIT 26 // use in edge detection for grad limit
 #define PI 3.1415926
-#define DIFF 100//judge whether two points are the same
+#define DIFF 10000//judge whether two points are the same
 typedef double eleType;//CImg element type
 
 struct Point

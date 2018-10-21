@@ -62,6 +62,7 @@ void Hough::edge_detect(void)
     string edgefile = "edge"+filename;
     edge.save(edgefile.c_str());
     ans = CImg<eleType>(edge);
+    edge.display();
 }
 
 void Hough::find_circle(void)
@@ -115,12 +116,18 @@ void Hough::find_circle(void)
     //debug
     cout<<"radius loops over"<<endl;
     vector<pair<int,int> > center;//store circle center
+    vector<int> circle_radius;
 
-    for(unsigned int i = 0;i < CIRCLE_NUM;i++)
+    int circleNumber = 0;
+    //for(unsigned int i = 0;i < CIRCLE_NUM;i++)
+    for(unsigned int i = 0;i < voting_rank.size();i++)
     {
         //voting center using specific radius
         CImg<eleType> hough_space(source.width(),source.height());
         int radius = voting_rank[i].first;
+        if(voting_rank[i].second<180)
+            break;
+        cout<<voting_rank[i].first<<" "<<voting_rank[i].second<<endl;
         cimg_forXY(edge,x,y)
         {
             if(edge(x,y)>0)//´æÔÚ
@@ -159,9 +166,11 @@ void Hough::find_circle(void)
         {
             //check whether center (x,y) is available.
             bool available = true;
+            if(circleWeight[i].x==0 || circleWeight[i].y==0)
+                continue;
             for(unsigned int j = 0 ;j < center.size();j++)
             {
-                if(pow(circleWeight[i].x-center[j].first,2)+pow(circleWeight[i].y-center[j].second,2)<DIFF)
+                if(pow(circleWeight[i].x-center[j].first,2)+pow(circleWeight[i].y-center[j].second,2)<DIFF && abs(radius-circle_radius[j])<80)
                 {
                     available = false;
                     break;
@@ -175,12 +184,15 @@ void Hough::find_circle(void)
             const double color[]={0,0,255};
             const double red [] = {255,0,0};
             center.push_back(make_pair(circleWeight[i].x,circleWeight[i].y));
+            circle_radius.push_back(radius);
             ans.draw_circle(circleWeight[i].x,circleWeight[i].y,radius,color);
             ans.draw_circle(circleWeight[i].x,circleWeight[i].y,radius,red,1);
             cout<<"answer is "<<circleWeight[i].x<<" "<<circleWeight[i].y<<endl;
+            circleNumber++;
             break;
         }
     }
+    cout<<"The number of circle is "<<circleNumber<<endl;
     ans.display();
     string filename = "ans"+this->filename;
     ans.save(filename.c_str());
