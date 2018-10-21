@@ -8,9 +8,9 @@ using namespace cimg_library;
 using namespace std;
 #define GRAD_LIMIT 60
 #define GRADLIMIT 20
-#define EDG_NUM 6 //number of edge you want
+#define EDG_NUM 4 //number of edge you want
 //hough transform
-#define THRESHOLD 255
+#define THRESHOLD 300
 #define DIFF 300
 #define PI 3.1415926
 #define SLOPE_FLAG 1

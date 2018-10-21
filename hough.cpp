@@ -55,7 +55,7 @@ void Hough::edge_detect(void)
     }
     grayImg.blur(2);
 
-    edge = CImg<eleType>(source.width(),source.height(),1,3,0);
+    edge = CImg<eleType>(source.width(),source.height());
     hough_space = CImg<eleType>(360,maxDistance,1,1,0);
     CImg_3x3(I,eleType);
     cimg_for3x3(grayImg,x,y,0,0,I,eleType)
@@ -67,10 +67,11 @@ void Hough::edge_detect(void)
         double grad = sqrt(gx*gx+gy*gy);
         if(grad>GRADLIMIT)
         {
-            //edge(x,y) = grad;
+            edge(x,y) = grad;
+            /*
             edge(x,y,0) = 255;
             edge(x,y,1) = 255;
-            edge(x,y,2) = 255;
+            edge(x,y,2) = 255;*/
             //change hough space
             cimg_forX(hough_space,angle)
             {
@@ -78,13 +79,14 @@ void Hough::edge_detect(void)
                 int p = (int)(x*cos(ra)+y*sin(ra));
                 if( p >= 0 && p <= hough_space.height() )
                 {
-                    if(hough_space(angle,p)<255)
+                    //if(hough_space(angle,p)<255)
                         hough_space(angle,p) += 1;
                 }
             }
         }
     }
     edge.display();
+    hough_space.display();
 }
 
 void Hough::load_edge(void)
@@ -118,8 +120,6 @@ void Hough::find_point(void)
             y+=point[j].y;
             v+=point[j].value;
         }
-        if(coordinate.size()<EDG_NUM)
-        {
             coordinate.push_back(Point((int)x/point.size(),(int)y/point.size(),(int)v/point.size()));
             numbers.push_back(point.size());
             int pointer = coordinate.size()-2;
@@ -135,31 +135,12 @@ void Hough::find_point(void)
                     break;
                 }
             }
-        }
-        else if(numbers[EDG_NUM-1]<point.size())
-        {
-            coordinate[EDG_NUM-1] = Point((int)x/point.size(),(int)y/point.size(),(int)v/point.size());
-            numbers[EDG_NUM-1] = point.size();
-            int pointer = coordinate.size()-2;
-            if(pointer<0)
-                continue;
-            while(numbers[pointer]<numbers[pointer+1])
-            {
-                swap(numbers[pointer],numbers[pointer+1]);
-                swap(coordinate[pointer],coordinate[pointer+1]);
-                pointer--;
-                if(pointer<0)
-                {
-                    break;
-                }
-            }
-        }
-
 
     }
 
     CImg<eleType> result(source);
     //draw line
+    int edgeCounting = 0;
     for(unsigned int i = 0 ;i <coordinate.size();i++)
     {
         //output calculate
@@ -206,6 +187,9 @@ void Hough::find_point(void)
         else{
             result.draw_line(xmin,y0,xmax,y1,blue);
         }
+        edgeCounting ++;
+        if(edgeCounting == EDG_NUM)
+            break;
 
     }
 
@@ -230,6 +214,6 @@ void Hough::find_point(void)
             }
         }
     }
-    result.display();
+    result.save("ans.bmp");
 }
 
