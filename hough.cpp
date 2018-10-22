@@ -2,24 +2,7 @@
 #include <cmath>
 #include <iostream>
 using namespace std;
-// Polar coordinate intersection at x
-const int CrossX(int theta, int distance, int x) {
-    double angle = (double)theta*PI / 180.0;
-    double m = -cos(angle) / sin(angle);
-    double b = (double)distance / sin(angle);
-    return m*x + b;
-}
 
-// Polar coordinate intersection at y
-const int CrossY(int theta, int distance, int y) {
-    double angle = (double)theta*PI / 180.0;
-    double m = -cos(angle) / sin(angle);
-    double b = (double)distance / sin(angle);
-    return ((double)(y - b) / m);
-}
-double calculatedistance(double x, double y) {
-    return sqrt(x*x + y*y);
-}
 Hough::Hough()
 {
 
@@ -28,6 +11,8 @@ Hough::Hough()
 Hough::Hough(string s)
 {
     source = CImg<eleType>(s.c_str());
+    ans = CImg<eleType>(source.width(),source.height(),1,3);
+    filename = s;
     cout<<"width:"<<source.width()<<endl;
     cout<<"height:"<<source.height()<<endl;
 
@@ -43,6 +28,7 @@ void Hough::edge_detect(void)
     double maxDistance = sqrt(source.width()*source.width()+source.height()*source.height());
 
     //turn to gray
+
     CImg<eleType> grayImg(source);
     cimg_forXY(grayImg, x, y) {
         double R = grayImg(x, y, 0, 0);
@@ -68,10 +54,9 @@ void Hough::edge_detect(void)
         if(grad>GRADLIMIT)
         {
             edge(x,y) = grad;
-            /*
-            edge(x,y,0) = 255;
-            edge(x,y,1) = 255;
-            edge(x,y,2) = 255;*/
+            ans(x,y,0) = 255;
+            ans(x,y,1) = 255;
+            ans(x,y,2) = 255;
             //change hough space
             cimg_forX(hough_space,angle)
             {
@@ -85,8 +70,10 @@ void Hough::edge_detect(void)
             }
         }
     }
-    edge.display();
-    hough_space.display();
+    string ansFile = "edge_"+filename;
+    ans.save(ansFile.c_str());
+    //hough_space.display();
+    cout<<"edge detect over"<<endl;
 }
 
 void Hough::load_edge(void)
@@ -120,6 +107,8 @@ void Hough::find_point(void)
             y+=point[j].y;
             v+=point[j].value;
         }
+
+        //insert them into the vector
             coordinate.push_back(Point((int)x/point.size(),(int)y/point.size(),(int)v/point.size()));
             numbers.push_back(point.size());
             int pointer = coordinate.size()-2;
@@ -137,8 +126,7 @@ void Hough::find_point(void)
             }
 
     }
-
-    CImg<eleType> result(source);
+    cout<<"area clusterring over"<<endl;
     //draw line
     int edgeCounting = 0;
     for(unsigned int i = 0 ;i <coordinate.size();i++)
@@ -182,23 +170,31 @@ void Hough::find_point(void)
 
         if(abs(m)>1)
         {
-            result.draw_line(x0,ymin,x1,ymax,blue);
+            ans.draw_line(x0,ymin,x1,ymax,blue);
         }
         else{
-            result.draw_line(xmin,y0,xmax,y1,blue);
+            ans.draw_line(xmin,y0,xmax,y1,blue);
         }
         edgeCounting ++;
         if(edgeCounting == EDG_NUM)
             break;
-
     }
-
+    string I2name = "I2_"+filename;
+    ans.save(I2name.c_str());
+    cout<<"draw line over"<<endl;
     //intersection point of two lines
-    cout<<"intersection"<<endl;
+    cout<<"intersections"<<endl;
+    vector<pair<double,double> > intersections;
     for(unsigned int i = 0 ;i<lines.size();i++)
     {
-        for(unsigned int j = i+1 ;j<lines.size();j++)
+        int x0 = 0;
+        int x1 = 0;
+        int y0 = 0;
+        int y1 = 0;
+        for(unsigned int j = 0 ;j<lines.size();j++)
         {
+            if(i == j)
+                continue;
             double m0 = lines[i].m;
             double m1 = lines[j].m;
             double b0 = lines[i].b;
@@ -206,14 +202,58 @@ void Hough::find_point(void)
 
             double x = -1.0*(b1-b0)/(m1-m0);
             double y = m0*x+b0;
-            if(x>=0 && x<result.width() && y>=0 && y<result.height())
+            if(x>=0 && x<source.width() && y>=0 && y<source.height())
             {
-                cout<<x<<" "<<y<<endl;
-                const double red[]={255,0,0};
-                result.draw_circle(x,y,5,red);
+                if(x0==0&y0==0)
+                {
+                    x0 = x;
+                    y0 = y;
+                }
+                else
+                {
+                    x1 = x;
+                    y1 = y;
+                }
+                bool isRepeat = false;
+                for(unsigned int k = 0;k<intersections.size();k++)
+                {
+                    if(abs((int)(intersections[k].first - x)) < 10.0 && abs((int)intersections[k].second-y)<10.0)
+                    {
+                        isRepeat = true;
+                        break;
+                    }
+                }
+                if(isRepeat)
+                    continue;
+                cout<<x<<" "<<y<<endl<<endl;
+
+                intersections.push_back(make_pair(x,y));
             }
         }
+        const double red[]={255,0,0};
+        if(x1!=0 && y1!=0)
+            ans.draw_line(x0,y0,x1,y1,red);
     }
-    result.save("ans.bmp");
+    string I3name = "I3_"+filename;
+    ans.save(I3name.c_str());
+
+    for(unsigned int i = 0;i<intersections.size();i++)
+    {
+        int x = intersections[i].first;
+        int y = intersections[i].second;
+        const double color[]={255,0,255};
+        ans.draw_circle(x,y,5,color);
+    }
+    string I4name = "I4_"+filename;
+    ans.save(I4name.c_str());
+    cout<<"total over"<<endl;
 }
 
+
+void Hough::clear(void)
+{
+    source.clear();
+    edge.clear();
+    ans.clear();
+    hough_space.clear();
+}

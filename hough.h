@@ -28,7 +28,7 @@ private:
     CImg<eleType> ans;
     //以下为辅助计算内容
     CImg<eleType> hough_space;
-
+    string filename;
 public:
     Hough();
     Hough(string s);
@@ -36,6 +36,7 @@ public:
     void edge_detect(void);
     void load_edge();//for debug loading edge from edge.bmp. Must run edge_detect first.
     void find_point();
+    void clear(void);
 };
 
 

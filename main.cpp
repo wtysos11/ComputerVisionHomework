@@ -14,26 +14,35 @@ using namespace std;
 
 int main(int argc,char** argv)
 {
-   string infilename="test.bmp";  /* Name of the input image */
-   string dirfilename=""; /* Name of the output gradient direction image */
-   string outfilename;    /* Name of the output "edge" image */
-   string composedfname;  /* Name of the output "direction" image */
- //  unsigned char *image;     /* The input image */
- //  unsigned char *edge;      /* The output edge image */
-   int rows, cols;           /* The dimensions of the image. */
-   float sigma = 2.0,              /* Standard deviation of the gaussian kernel. */
-	 tlow = 0.5,               /* Fraction of the high threshold in hysteresis. */
-	 thigh = 0.9;              /* High hysteresis threshold control. The actual
-			        threshold is the (100 * thigh) percentage point
-			        in the histogram of the magnitude of the
-			        gradient image that passes non-maximal
-			        suppression. */
-
-    Hough hough(infilename);
-    hough.gaussian_smooth();
+    cout<<"test test.bmp"<<endl;
+    Hough hough("test.bmp");
     hough.edge_detect();
-    //hough.load_edge();
     hough.find_point();
-
+    hough.clear();
+    cout<<"test test2.bmp"<<endl;
+    Hough hough2("test2.bmp");
+    hough2.edge_detect();
+    hough2.find_point();
+    hough2.clear();
+    cout<<"test test3.bmp"<<endl;
+    Hough hough3("test3.bmp");
+    hough3.edge_detect();
+    hough3.find_point();
+    hough3.clear();
+    cout<<"test test4.bmp"<<endl;
+    Hough hough4("test4.bmp");
+    hough4.edge_detect();
+    hough4.find_point();
+    hough4.clear();
+    cout<<"test test5.bmp"<<endl;
+    Hough hough5("test5.bmp");
+    hough5.edge_detect();
+    hough5.find_point();
+    hough5.clear();
+    cout<<"test test6.bmp"<<endl;
+    Hough hough6("test6.bmp");
+    hough6.edge_detect();
+    hough6.find_point();
+    hough6.clear();
     return 0;
 }
