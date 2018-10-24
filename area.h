@@ -24,14 +24,13 @@ struct Line{
 class Area
 {
 private:
-    vector<vector<Point>> cache;
-    vector<int> num;
+    vector<Point> center_point;
     const int deltax = 8;//pointx - max/minx = 5
     const int deltay = 250;// pointy - min/maxy = 200
 public:
     Area()
     {
-        cache.clear();
+        center_point.clear();
     }
     double distance(Point a,Point b)
     {
@@ -40,32 +39,25 @@ public:
     void addPoint(Point p)
     {
         //find if this point fit the area in cache.
-        for(unsigned int i = 0; i < cache.size() ; i++ )
+        for(unsigned int i = 0; i < center_point.size() ; i++ )
         {
-            if(abs(cache[i][0].x-p.x)<this->deltax && abs(cache[i][0].y-p.y)<this->deltay)
+            if(abs(center_point[i].x-p.x)<this->deltax && abs(center_point[i].y-p.y)<this->deltay && p.value>center_point[i].value)
             {
-                cache[i].push_back(p);
-                num[i]++;
+                center_point[i] = p;
                 return;
             }
         }
-        vector<Point> another = vector<Point>();
-        another.push_back(p);
-        cache.push_back(another);
-        num.push_back(1);
+        center_point.push_back(p);
     }
     int getSize()
     {
-        return cache.size();
+        return center_point.size();
     }
-    vector<Point> getArea(int index)
+    Point getArea(int index)
     {
-        return cache[index];
+        return center_point[index];
     }
-    int getNum(int index)
-    {
-        return num[index];
-    }
+
 
 };
 

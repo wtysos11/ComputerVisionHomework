@@ -7,7 +7,7 @@
 using namespace cimg_library;
 using namespace std;
 #define GRAD_LIMIT 60
-#define GRADLIMIT 20
+#define GRADLIMIT 19
 #define EDG_NUM 4 //number of edge you want
 //hough transform
 #define THRESHOLD 300

@@ -29,15 +29,12 @@ void Hough::edge_detect(void)
 
     //turn to gray
 
-    CImg<eleType> grayImg(source);
+    CImg<eleType> grayImg(source.width(),source.height());
     cimg_forXY(grayImg, x, y) {
-        double R = grayImg(x, y, 0, 0);
-        double G = grayImg(x, y, 0, 1);
-        double B = grayImg(x, y, 0, 2);
-        double Gray = (R * 299 + G * 587 + B * 114 + 500) / 1000;
-        grayImg(x, y, 0, 0) = Gray;
-        grayImg(x, y, 0, 1) = Gray;
-        grayImg(x, y, 0, 2) = Gray;
+        double r = source(x, y, 0, 0);
+        double g = source(x, y, 0, 1);
+        double b = source(x, y, 0, 2);
+        grayImg(x, y) = (r * 299 + g * 587 + b * 114 + 500) / 1000;
     }
     grayImg.blur(2);
 
@@ -74,6 +71,7 @@ void Hough::edge_detect(void)
     ans.save(ansFile.c_str());
     //hough_space.display();
     cout<<"edge detect over"<<endl;
+    edge.display();
 }
 
 void Hough::load_edge(void)
@@ -86,7 +84,6 @@ void Hough::find_point(void)
 {
     Area area;
     vector<Point> coordinate = vector<Point>();
-    vector<int> numbers = vector<int>();
     vector<Line> lines = vector<Line>();
 
     cimg_forXY(hough_space,angle,p)
@@ -99,24 +96,18 @@ void Hough::find_point(void)
     cout<<area.getSize()<<endl;
     for(unsigned int i = 0;i<area.getSize();i++)
     {
-        vector<Point> point(area.getArea(i));
-        int x = 0,y = 0,v = 0;
-        for(unsigned int j = 0 ;j < point.size();j++)
-        {
-            x+=point[j].x;
-            y+=point[j].y;
-            v+=point[j].value;
-        }
+        Point point(area.getArea(i));
+        int x = point.x;
+        int y = point.y;
+        int v = point.value;
 
         //insert them into the vector
-            coordinate.push_back(Point((int)x/point.size(),(int)y/point.size(),(int)v/point.size()));
-            numbers.push_back(point.size());
+            coordinate.push_back(point);
             int pointer = coordinate.size()-2;
             if(pointer<0)
                 continue;
-            while(numbers[pointer]<numbers[pointer+1])
+            while(coordinate[pointer].value<coordinate[pointer+1].value)
             {
-                swap(numbers[pointer],numbers[pointer+1]);
                 swap(coordinate[pointer],coordinate[pointer+1]);
                 pointer--;
                 if(pointer<0)
@@ -150,7 +141,7 @@ void Hough::find_point(void)
         const int y0 = (double)(xmin*m+b);
         const int y1 = (double)(xmax*m+b);
         //cout<<x0<<" "<<x1<<" "<<y0<<" "<<y1<<endl;
-        //legal check
+        //legal check, if the line has two intersection with the image boarder, then it pass the check.
         if(x0>=0 && x0<source.width())
             counting++;
         if(x1>=0 && x1<source.width())
