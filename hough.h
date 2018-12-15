@@ -10,7 +10,7 @@ using namespace std;
 #define GRADLIMIT 26
 #define EDG_NUM 4 //number of edge you want
 //hough transform
-#define THRESHOLD 800
+#define THRESHOLD 300
 #define DIFF 300
 #define PI 3.1415926
 #define SLOPE_FLAG 1
@@ -28,8 +28,9 @@ private:
 public:
     Hough();
     Hough(string s);
-    Hough(CImg<eleType> edge2)
+    Hough(CImg<eleType> source,CImg<eleType> edge2)
     {
+        ans = source;
         edge = edge2;
     }
     void find_point();

@@ -31,12 +31,12 @@ void Hough::find_point(void)
     }
     cimg_forXY(edge,x,y)
     {
-        if(edge(x,y,0)==0)
+        if(edge(x,y,0)==255)
         {
             cimg_forX(hough_space,angle)
             {
                 int polar = (int)(x*cosCache[angle]+y*sinCache[angle]);
-                if( polar >= 0 && polar <= hough_space.height() )
+                if( polar >= 0 && polar < hough_space.height() )
                 {
                     hough_space(angle,polar) += 1;
                 }
@@ -53,9 +53,9 @@ void Hough::find_point(void)
     //将原空间划分为若干个区域，每个区域只取一个最大值点
     int angle_step = 10;
     int rho_step = 300;
-    for(int angle = 0;angle<360;angle+=angle_step)
+    for(int angle = 10;angle<350;angle+=angle_step)
     {
-        for(int polar = 0;polar<maxDistance;polar+=rho_step)
+        for(int polar = 100;polar<maxDistance-100;polar+=rho_step)
         {
             int maxX,maxY;
             double maxCount = 0;
@@ -171,6 +171,7 @@ void Hough::find_point(void)
         if(edgeCounting == EDG_NUM)
             break;
     }
+    ans.display();
     cout<<"draw line over"<<endl;
     //intersection point of two lines
     /*
