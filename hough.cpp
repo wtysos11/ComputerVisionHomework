@@ -3,13 +3,23 @@
 #include <iostream>
 using namespace std;
 
-void drawLines(CImg<int> &im,double k,double b)
+void drawLines(CImg<int> &im,double m,double b)
 {
-    int x0 = 0,x1 = im.width()-10;
-    int y0 = k*x0-b;
-    int y1 = k*x1-b;
+    const int ymin = 0;
+    const int ymax = im.height()-1;
+    const int xmin = 0;
+    const int xmax = im.width()-1;
+
+    int counting = 0;
+    const int x0 = (double)(ymin-b)/m;
+    const int x1 = (double)(ymax-b)/m;
+    const int y0 = (double)(xmin*m+b);
+    const int y1 = (double)(xmax*m+b);
     const double blue[] = {0,0,255};
-    im.draw_line(x0,y0,x1,y1,blue);
+    if(abs(m)>1)
+        im.draw_line(x0,ymin,x1,ymax,blue);
+    else
+        im.draw_line(xmin,y0,xmax,y1,blue);
 }
 
 Hough::Hough()
@@ -156,7 +166,10 @@ void Hough::find_point(void)
             counting++;
         if(y1>=0 && y1<edge.height())
             counting++;
-
+        cout<<"\n";
+        cout<<atan(-1/m)<<endl;
+        cout<<"line "<<i<<" measured by point ("<<angle<<","<<polar<<") with times "<<coordinate[i].value<<endl;
+        cout<<"y = "<<m<<"x+"<<b<<endl;
 
         bool passParallelCheck = false;
         //平行线检查
@@ -164,8 +177,9 @@ void Hough::find_point(void)
         if(lines1.size()==0)
         {
             lines1.push_back(Line{m,b});
+            cout<<"In line1"<<endl;
         }
-        else if(fabs(lines1[0].m - m)<0.4)
+        else if(fabs(fabs(atan(-1/lines1[0].m))-fabs(atan(-1/m))) < 1)
         {
             if(fabs(lines1[0].b-b)<10)
             {
@@ -173,12 +187,14 @@ void Hough::find_point(void)
             }
 
             lines1.push_back(Line{m,b});
+            cout<<"In line1"<<endl;
         }
         else if(lines2.size()==0)
         {
             lines2.push_back(Line{m,b});
+            cout<<"In line2"<<endl;
         }
-        else if(fabs(lines2[0].m - m)<0.4)
+        else if(fabs(fabs(atan(-1/lines2[0].m))-fabs(atan(-1/m))) < 1)
         {
             if(fabs(lines2[0].b-b)<10)
             {
@@ -186,14 +202,14 @@ void Hough::find_point(void)
             }
 
             lines2.push_back(Line{m,b});
+            cout<<"In line2"<<endl;
         }
         else
         {
             continue;
         }
-/*
-        cout<<"line "<<i<<" measured by point ("<<angle<<","<<polar<<") with times "<<coordinate[i].value<<endl;
-        cout<<"y = "<<m<<"x+"<<b<<endl;
+
+        /*
         const double blue[] = {0,0,255};
 
         if(abs(m)>1)
@@ -214,14 +230,19 @@ void Hough::find_point(void)
     int l2_index1 = -1;
     int l2_index2 = -1;
     //according to back number
+    cout<<"line1 number"<<lines1.size()<<endl;
+    cout<<"line2 number"<<lines2.size()<<endl;
+
     double max1 = 0.0, max2 = 0.0;
     for(int i = 0;i<lines1.size();i++)
     {
         int counting = 0;
-        for(int x = 0;x<edge.width();x++)
+        for(int x = 10;x<edge.width()-10;x++)
         {
             int y = (double) lines1[i].m*x+lines1[i].b;
-            if(edge(x,y,0)==255)
+            if(y<10 || y>edge.height()-10)
+                continue;
+            else if(edge(x,y,0)==255)
                 counting++;
         }
         double ratio = (double) counting/edge.width();
@@ -238,7 +259,7 @@ void Hough::find_point(void)
             l1_index2 = i;
         }
     }
-
+    cout<<"line1"<<max1<<" "<<max2<<endl;
     max1 = 0.0,max2 = 0.0;
     for(int i = 0;i<lines2.size();i++)
     {
@@ -246,32 +267,34 @@ void Hough::find_point(void)
         for(int x = 0;x<edge.width();x++)
         {
             int y = (double) lines2[i].m*x+lines2[i].b;
-            if(edge(x,y,0)==255)
+            if(y<0 || y>edge.height())
+                continue;
+            else if(edge(x,y,0)==255)
                 counting++;
         }
         double ratio = (double) counting/edge.width();
         if(ratio>max1)
         {
             max2 = max1;
-            l1_index2 = l1_index1;
+            l2_index2 = l2_index1;
             max1 = ratio;
-            l1_index1 = i;
+            l2_index1 = i;
         }
         else if(ratio>max2)
         {
             max2 = ratio;
-            l1_index2 = i;
+            l2_index2 = i;
         }
     }
-
+    cout<<"line2"<<max1<<" "<<max2<<endl;
     cout<<"y = "<<lines1[l1_index1].m<<"x+"<<lines1[l1_index1].b<<endl;
     cout<<"y = "<<lines1[l1_index2].m<<"x+"<<lines1[l1_index2].b<<endl;
-    cout<<"y = "<<lines1[l2_index1].m<<"x+"<<lines2[l1_index1].b<<endl;
-    cout<<"y = "<<lines1[l2_index2].m<<"x+"<<lines2[l1_index2].b<<endl;
+    cout<<"y = "<<lines2[l2_index1].m<<"x+"<<lines2[l2_index1].b<<endl;
+    cout<<"y = "<<lines2[l2_index2].m<<"x+"<<lines2[l2_index2].b<<endl;
     drawLines(ans,lines1[l1_index1].m,lines1[l1_index1].b);
     drawLines(ans,lines1[l1_index2].m,lines1[l1_index2].b);
-    drawLines(ans,lines1[l2_index1].m,lines1[l2_index1].b);
-    drawLines(ans,lines1[l2_index2].m,lines1[l2_index2].b);
+    drawLines(ans,lines2[l2_index1].m,lines2[l2_index1].b);
+    drawLines(ans,lines2[l2_index2].m,lines2[l2_index2].b);
     ans.display();
     cout<<"draw line over"<<endl;
     //intersection point of two lines
