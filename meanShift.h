@@ -146,9 +146,8 @@ public:
             }
         }
         cout<<number<<endl;
-        edge.display();
 
-        Hough hough(edge);
+        Hough hough(edge,edge);
         hough.find_point();
     }
 };

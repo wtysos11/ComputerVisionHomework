@@ -18,12 +18,13 @@ Hough::Hough(string s)
 
 void Hough::find_point(void)
 {
-    double maxDistance = sqrt(edge.width()*edge.width()+edge.height()*edge.height());
-    hough_space = CImg<double>(360,maxDistance,1,1,0);
-    vector<double> cosCache(360);
-    vector<double> sinCache(360);
+    cout<<"hough point"<<endl;
+    double maxDistance = (edge.width() + edge.height()) * 2;
+    hough_space = CImg<double>(180,maxDistance,1,1,0);
+    vector<double> cosCache(180);
+    vector<double> sinCache(180);
 
-    for(int i = 0;i<360;i++)
+    for(int i = 0;i<180;i++)
     {
         double ra = (double)i*PI/180.0;
         sinCache[i] = sin(ra);
@@ -36,9 +37,9 @@ void Hough::find_point(void)
             cimg_forX(hough_space,angle)
             {
                 int polar = (int)(x*cosCache[angle]+y*sinCache[angle]);
-                if( polar >= 0 && polar < hough_space.height() )
+                if( polar+0.5*maxDistance >= 0 && polar < 0.5*maxDistance )
                 {
-                    hough_space(angle,polar) += 1;
+                    hough_space(angle,polar+0.5*maxDistance) += 1;
                 }
             }
         }
@@ -48,17 +49,17 @@ void Hough::find_point(void)
     Area area;
     vector<Point> coordinate = vector<Point>();
     vector<int> numbers = vector<int>();
-    vector<Line> lines = vector<Line>();
 
     //将原空间划分为若干个区域，每个区域只取一个最大值点
     int angle_step = 10;
-    int rho_step = 300;
-    for(int angle = 10;angle<350;angle+=angle_step)
+    int rho_step = 200;
+    for(int angle = 0;angle<180;angle+=angle_step)
     {
-        for(int polar = 100;polar<maxDistance-100;polar+=rho_step)
+        for(int polar = 0;polar<maxDistance;polar+=rho_step)
         {
             int maxX,maxY;
             double maxCount = 0;
+
             for(int x = 0;x<angle_step;x++)
             {
                 for(int y = 0;y<rho_step;y++)
@@ -81,7 +82,7 @@ void Hough::find_point(void)
             }
         }
     }
-    cout<<area.getSize()<<endl;
+    cout<<"area size"<<area.getSize()<<endl;
 
     for(unsigned int i = 0;i<area.getSize();i++)
     {
@@ -107,14 +108,20 @@ void Hough::find_point(void)
     }
     cout<<"area clusterring over"<<endl;
     //draw line
+    //only allow two parallel lines.
     int edgeCounting = 0;
     cout<<"coordinate size"<<coordinate.size()<<endl;
+    vector<Line> lines1;
+    vector<Line> lines2;
     for(unsigned int i = 0 ;i <coordinate.size();i++)
     {
         //output calculate
         int angle = coordinate[i].x;
-        int polar = coordinate[i].y;
+        int polar = coordinate[i].y - 0.5*maxDistance;
         double ra = (double)angle*PI/180.0;//real angle
+        if(sin(ra)==0)
+            continue;
+
         double m = -cos(ra)/sin(ra);
         double b = (double) polar/sin(ra);
 
@@ -140,24 +147,43 @@ void Hough::find_point(void)
         if(y1>=0 && y1<edge.height())
             counting++;
 
-        if(counting!=2)
-            continue;
-        int paNumber = 0;;
-        for(int j = 0;j<lines.size();j++)
+
+        bool passParallelCheck = false;
+        //平行线检查
+        //检查是否属于第一类直线
+        if(lines1.size()==0)
         {
-            if(fabs(lines[j].m-m) < 0.1)
-            {
-                paNumber++;
-            }
+            lines1.push_back(Line{m,b});
         }
-        if(paNumber > 2)
+        else if(fabs(lines1[0].m - m)<0.1)
+        {
+            if(fabs(lines1[0].b-b)<10 || lines1.size()==2)
+            {
+                continue;
+            }
+
+            lines1.push_back(Line{m,b});
+        }
+        else if(lines2.size()==0)
+        {
+            lines2.push_back(Line{m,b});
+        }
+        else if(fabs(lines2[0].m - m)<0.1)
+        {
+            if(fabs(lines2[0].b-b)<10 || lines2.size()==2)
+            {
+                continue;
+            }
+
+            lines2.push_back(Line{m,b});
+        }
+        else
         {
             continue;
         }
 
         cout<<"line "<<i<<" measured by point ("<<angle<<","<<polar<<") with times "<<coordinate[i].value<<endl;
         cout<<"y = "<<m<<"x+"<<b<<endl;
-        lines.push_back(Line(m,b));
         const double blue[] = {0,0,255};
 
         if(abs(m)>1)
@@ -167,9 +193,11 @@ void Hough::find_point(void)
         else{
             ans.draw_line(xmin,y0,xmax,y1,blue);
         }
+
         edgeCounting ++;
         if(edgeCounting == EDG_NUM)
             break;
+
     }
     ans.display();
     cout<<"draw line over"<<endl;
