@@ -174,12 +174,14 @@ void Hough::find_point(void)
         bool passParallelCheck = false;
         //平行线检查
         //检查是否属于第一类直线
+        double delta = 0.5;
+
         if(lines1.size()==0)
         {
             lines1.push_back(Line{m,b});
             cout<<"In line1"<<endl;
         }
-        else if(fabs(fabs(atan(-1/lines1[0].m))-fabs(atan(-1/m))) < 1)
+        else if(fabs(atan(-1/lines1[0].m)-atan(-1/m)) < delta || fabs(atan(-1/lines1[0].m)-atan(-1/m) + 3.14) < delta || fabs(atan(-1/lines1[0].m)-atan(-1/m) - 3.14) < delta)
         {
             if(fabs(lines1[0].b-b)<10)
             {
@@ -194,7 +196,7 @@ void Hough::find_point(void)
             lines2.push_back(Line{m,b});
             cout<<"In line2"<<endl;
         }
-        else if(fabs(fabs(atan(-1/lines2[0].m))-fabs(atan(-1/m))) < 1)
+        else if(fabs(atan(-1/lines2[0].m)-atan(-1/m)) < delta || fabs(atan(-1/lines2[0].m)-atan(-1/m) + 3.14) < delta || fabs(atan(-1/lines2[0].m)-atan(-1/m) - 3.14) < delta)
         {
             if(fabs(lines2[0].b-b)<10)
             {

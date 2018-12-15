@@ -14,7 +14,7 @@ int main(void)
     cout<<threshold<<endl;
     o.outputBio(threshold);
 */
-    meanShift m("test31.bmp");
+    meanShift m("test21.bmp");
     m.compute();
     return 0;
 }
