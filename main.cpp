@@ -15,7 +15,7 @@ int main(void)
     o.outputBio(threshold);
 */
 
-    meanShift m("test6.bmp");
+    meanShift m("test1.bmp");
     m.compute();
 
 

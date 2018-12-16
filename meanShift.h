@@ -48,16 +48,7 @@ vector<double> affine_fit(vector<vector<double>> from,vector<vector<double>> to)
             }
         }
     }
-    cout<<"c"<<endl;
-    cout<<c.size()<<" "<<c[0].size()<<endl;
-    for(int j = 0;j<c.size();j++)
-    {
-        for(int k = 0;k<c[j].size();k++)
-        {
-            cout<<c[j][k]<<" ";
-        }
-        cout<<endl;
-    }
+
 
     vector<vector<double>> Q;
     for(int i = 0;i<dim+1;i++)
@@ -77,15 +68,7 @@ vector<double> affine_fit(vector<vector<double>> from,vector<vector<double>> to)
             }
         }
     }
-    cout<<"Q"<<endl;
-    for(int j = 0;j<dim+1;j++)
-    {
-        for(int k = 0;k<dim+1;k++)
-        {
-            cout<<Q[j][k]<<" ";
-        }
-        cout<<endl;
-    }
+
 
     vector<vector<double>> m(dim+1);
     for(int i = 0;i<dim+1;i++)
@@ -103,16 +86,6 @@ vector<double> affine_fit(vector<vector<double>> from,vector<vector<double>> to)
             }
         }
 
-    }
-    cout<<"m"<<endl;
-    cout<<m.size()<<" "<<m[0].size()<<endl;
-    for(int j = 0;j<dim+1;j++)
-    {
-        for(int k = 0;k<dim*2+1;k++)
-        {
-            cout<<m[j][k]<<" ";
-        }
-        cout<<endl;
     }
 
     double eps = 1.0/pow(10,10);
@@ -155,15 +128,6 @@ vector<double> affine_fit(vector<vector<double>> from,vector<vector<double>> to)
             m[y][x]/=cc;
         }
     }
-    cout<<"m"<<endl;
-    for(int j = 0;j<dim+1;j++)
-    {
-        for(int k = 0;k<dim*2+1;k++)
-        {
-            cout<<m[j][k]<<" ";
-        }
-        cout<<endl;
-    }
 
     vector<double> ans;
     for(int j = 0;j<dim;j++)
@@ -193,7 +157,7 @@ public:
     {
         time_t start = time(NULL);
         int width = source.width(),height = source.height();
-        const int h = 400;//窗口
+        const int h = 200;//窗口
         const double dist = 50;//颜色空间
 
         const double maxSpaceDist = 3;
@@ -301,40 +265,41 @@ public:
                 }
             }
         }
-        cout<<number<<endl;
-        source.save("meanshift.bmp");
-        edge.save("edge.bmp");
 
         Hough hough(edge,edge);
         vector<Point> intersections(hough.find_point());
+        hough.clear();
         time_t stop = time(NULL);
         cout<<"边缘检测时间:"<<stop-start<<"s"<<endl;
-
+        vector<vector<double>> from,to;
+        int begining = 0;
+        int minx = source.width(),miny = source.height();
         for(int i = 0;i<4;i++)
         {
-            cout<<intersections[i].x<<" "<<intersections[i].y<<endl;
-        }
-        bool shortFirst = true;
-        if(pow(intersections[1].x-intersections[0].x,2) +pow(intersections[1].y-intersections[0].y,2) > pow(intersections[1].x-intersections[2].x,2) +pow(intersections[1].y-intersections[2].y,2))
-            shortFirst = false;
-
-
-        vector<vector<double>> from,to;
-        //短边在前
-        if(shortFirst)
-        {
-            for(int i = 0;i<4;i++)
+            if(intersections[i].x<minx && intersections[i].y<miny)
             {
-                to.push_back(vector<double>{intersections[i].x,intersections[i].y});
+                minx = intersections[i].x;
+                miny = intersections[i].y;
+                begining = i;
             }
         }
-        else
+        int counting = 0;
+        int point = begining;
+        while(counting<4)
         {
-            for(int i = 1;i<4;i++)
-            {
-                to.push_back(vector<double>{intersections[i].x,intersections[i].y});
-            }
-            to.push_back(vector<double>{intersections[0].x,intersections[0].y});
+            to.push_back(vector<double>{intersections[point].x,intersections[point].y});
+            point++;
+            counting++;
+            if(point==4)
+                point = 0;
+        }
+
+
+
+        //最小的最优先
+        for(int i = 0;i<4;i++)
+        {
+            to.push_back(vector<double>{intersections[i].x,intersections[i].y});
         }
         double ra = 4;
         int a4w = 210 * ra,a4h = 297 * ra;
@@ -362,8 +327,53 @@ public:
             for(int i = 0;i<3;i++)
                 a4(x,y,i) = origin(aimX,aimY,i);
         }
-        a4.save("a4.bmp");
 
+        number_specific(a4,9);
+
+    }
+
+    void number_specific(CImg<int> a4,int ansNum)
+    {
+        //对图像进行二值化处理
+
+        cimg_forXY(a4,x,y)
+        {
+            a4(x,y,0) = (299*a4(x,y,0)+587*a4(x,y,1)+114*a4(x,y,2)+500)/1000;
+            if(a4(x,y,0) > 90|| (x<0.2*a4.width() || x>0.8*a4.width() || y<0.2*a4.height() || y>0.8*a4.height()) )
+            {
+                a4(x,y,0) = a4(x,y,1) = a4(x,y,2) = 255;
+            }
+            else
+            {
+                a4(x,y,0) = a4(x,y,1) = a4(x,y,2) = 0;
+            }
+        }
+
+        //膨胀
+        CImg<int> copyA4(a4);
+        for(int x = 1;x<a4.width()-1;x++)
+        {
+            for(int y = 1;y<a4.height()-1;y++)
+            {
+                a4(x,y,0) = a4(x,y,1) = a4(x,y,2) = 255;
+                bool over = false;
+                for(int i = x-1;i<=x+1 && !over;i++)
+                {
+                    for(int j = y-1;j<=y+1 && !over;j++)
+                    {
+                        if(copyA4(i,j)==0)
+                        {
+                            a4(x,y,0) = a4(x,y,1) = a4(x,y,2) = 0;
+                            over = true;
+                        }
+                    }
+                }
+            }
+        }
+        a4.display();
+        //垂直灰度和水平灰度
+        //提取4个顶点，转换到32*32矩阵上
+        //对32*32矩阵进行计数，输出到csv中
     }
 };
 

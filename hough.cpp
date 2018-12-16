@@ -135,7 +135,6 @@ vector<Point> Hough::find_point(void)
     //draw line
     //only allow two parallel lines.
     int edgeCounting = 0;
-    cout<<"coordinate size"<<coordinate.size()<<endl;
     vector<Line> lines1;
     vector<Line> lines2;
     for(unsigned int i = 0 ;i <coordinate.size();i++)
@@ -143,7 +142,6 @@ vector<Point> Hough::find_point(void)
         //output calculate
         int angle = coordinate[i].x;
         int polar = coordinate[i].y - 0.5*maxDistance;
-        cout<<"coordinate"<<i<<" "<<angle<<" "<<polar<<" "<<coordinate[i].value<<endl;
         double ra = (double)angle*PI/180.0;//real angle
         if(sin(ra)==0)
             ra = 0.01;
@@ -172,10 +170,6 @@ vector<Point> Hough::find_point(void)
             counting++;
         if(y1>=0 && y1<edge.height())
             counting++;
-        cout<<"\n";
-        cout<<atan(-1/m)<<endl;
-        cout<<"line "<<i<<" measured by point ("<<angle<<","<<polar<<") with times "<<coordinate[i].value<<endl;
-        cout<<"y = "<<m<<"x+"<<b<<endl;
 
         bool passParallelCheck = false;
         //平行线检查
@@ -185,7 +179,6 @@ vector<Point> Hough::find_point(void)
         if(lines1.size()==0)
         {
             lines1.push_back(Line{m,b});
-            cout<<"In line1"<<endl;
             edgeCounting ++;
         }
         else if(fabs(atan(-1/lines1[0].m)-atan(-1/m)) < delta || fabs(atan(-1/lines1[0].m)-atan(-1/m) + 3.14) < delta || fabs(atan(-1/lines1[0].m)-atan(-1/m) - 3.14) < delta)
@@ -211,13 +204,11 @@ vector<Point> Hough::find_point(void)
             }
 
             lines1.push_back(Line{m,b});
-            cout<<"In line1"<<endl;
             edgeCounting ++;
         }
         else if(lines2.size()==0)
         {
             lines2.push_back(Line{m,b});
-            cout<<"In line2"<<endl;
             edgeCounting ++;
         }
         else if(fabs(atan(-1/lines2[0].m)-atan(-1/m)) < delta || fabs(atan(-1/lines2[0].m)-atan(-1/m) + 3.14) < delta || fabs(atan(-1/lines2[0].m)-atan(-1/m) - 3.14) < delta)
@@ -243,7 +234,6 @@ vector<Point> Hough::find_point(void)
             }
 
             lines2.push_back(Line{m,b});
-            cout<<"In line2"<<endl;
             edgeCounting ++;
         }
         else
@@ -281,8 +271,6 @@ vector<Point> Hough::find_point(void)
     drawLines(ans,lines1[l1_index2].m,lines1[l1_index2].b);
     drawLines(ans,lines2[l2_index1].m,lines2[l2_index1].b);
     drawLines(ans,lines2[l2_index2].m,lines2[l2_index2].b);
-    //ans.display();
-    ans.save("ans.bmp");
     cout<<"draw line over"<<endl;
     //intersection point of two lines
     vector<Point> intersection;
