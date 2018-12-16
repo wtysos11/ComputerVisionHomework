@@ -8,6 +8,7 @@
 #include <iostream>
 #include <algorithm>
 #include <utility>
+#include <ctime>
 using namespace std;
 using namespace cimg_library;
 /*
@@ -190,8 +191,9 @@ public:
 
     void compute(void)
     {
+        time_t start = time(NULL);
         int width = source.width(),height = source.height();
-        const int h = 30;//窗口
+        const int h = 600;//窗口
         const double dist = 100;//颜色空间
 
         const double maxSpaceDist = 3;
@@ -300,16 +302,21 @@ public:
             }
         }
         cout<<number<<endl;
+        //source.display();
+        source.save("meanshift.bmp");
+        edge.save("edge.bmp");
 
         Hough hough(edge,edge);
         vector<Point> intersections(hough.find_point());
-/*
+        time_t stop = time(NULL);
+        cout<<"边缘检测时间:"<<stop-start<<"s"<<endl;
+
         for(int i = 0;i<4;i++)
         {
             cout<<intersections[i].x<<" "<<intersections[i].y<<endl;
         }
         bool shortFirst = true;
-        if(pow(intersections[1].x-intersections[0].x,2) +pow(intersections[1].y-intersections[0].y,2) v pow(intersections[1].x-intersections[2].x,2) +pow(intersections[1].y-intersections[2].y,2))
+        if(pow(intersections[1].x-intersections[0].x,2) +pow(intersections[1].y-intersections[0].y,2) > pow(intersections[1].x-intersections[2].x,2) +pow(intersections[1].y-intersections[2].y,2))
             shortFirst = false;
 
 
@@ -356,10 +363,9 @@ public:
             for(int i = 0;i<3;i++)
                 a4(x,y,i) = origin(aimX,aimY,i);
         }
-        origin.display();
-        a4.display();
+        a4.save("a4.bmp");
 
-    }*/
+    }
 };
 
 

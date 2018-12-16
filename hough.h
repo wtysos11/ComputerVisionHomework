@@ -10,7 +10,8 @@ using namespace std;
 #define GRADLIMIT 26
 #define EDG_NUM 4 //number of edge you want
 //hough transform
-#define THRESHOLD 150
+#define THRESHOLD 400
+//Àı¬‘Õº150
 #define DIFF 300
 #define PI 3.1415926
 #define SLOPE_FLAG 1

@@ -143,9 +143,10 @@ vector<Point> Hough::find_point(void)
         //output calculate
         int angle = coordinate[i].x;
         int polar = coordinate[i].y - 0.5*maxDistance;
+        cout<<"coordinate"<<i<<" "<<angle<<" "<<polar<<" "<<coordinate[i].value<<endl;
         double ra = (double)angle*PI/180.0;//real angle
         if(sin(ra)==0)
-            continue;
+            ra = 0.01;
 
         double m = -cos(ra)/sin(ra);
         double b = (double) polar/sin(ra);
@@ -232,6 +233,7 @@ vector<Point> Hough::find_point(void)
             break;
 */
     }
+
     int l1_index1 = -1;
     int l1_index2 = -1;
     int l2_index1 = -1;
@@ -302,7 +304,7 @@ vector<Point> Hough::find_point(void)
     drawLines(ans,lines1[l1_index2].m,lines1[l1_index2].b);
     drawLines(ans,lines2[l2_index1].m,lines2[l2_index1].b);
     drawLines(ans,lines2[l2_index2].m,lines2[l2_index2].b);
-    ans.display();
+    ans.save("ans.bmp");
     cout<<"draw line over"<<endl;
     //intersection point of two lines
     vector<Point> intersection;
