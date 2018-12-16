@@ -193,8 +193,8 @@ public:
     {
         time_t start = time(NULL);
         int width = source.width(),height = source.height();
-        const int h = 800;//窗口
-        const double dist = 100;//颜色空间
+        const int h = 400;//窗口
+        const double dist = 50;//颜色空间
 
         const double maxSpaceDist = 3;
         const double colorSpaceDist = 5;
@@ -302,7 +302,6 @@ public:
             }
         }
         cout<<number<<endl;
-        //source.display();
         source.save("meanshift.bmp");
         edge.save("edge.bmp");
 
