@@ -193,7 +193,7 @@ public:
     {
         time_t start = time(NULL);
         int width = source.width(),height = source.height();
-        const int h = 600;//窗口
+        const int h = 800;//窗口
         const double dist = 100;//颜色空间
 
         const double maxSpaceDist = 3;

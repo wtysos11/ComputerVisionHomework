@@ -180,40 +180,76 @@ vector<Point> Hough::find_point(void)
         bool passParallelCheck = false;
         //平行线检查
         //检查是否属于第一类直线
-        double delta = 0.5;
+        double delta = 0.2;
 
         if(lines1.size()==0)
         {
             lines1.push_back(Line{m,b});
             cout<<"In line1"<<endl;
+            edgeCounting ++;
         }
         else if(fabs(atan(-1/lines1[0].m)-atan(-1/m)) < delta || fabs(atan(-1/lines1[0].m)-atan(-1/m) + 3.14) < delta || fabs(atan(-1/lines1[0].m)-atan(-1/m) - 3.14) < delta)
         {
-            if(fabs(lines1[0].b-b)<10)
+            if(lines1.size()==2)
             {
                 continue;
+            }
+            else if(fabs(lines1[0].m-m)<10 && fabs(b-lines1[0].b)/sqrt(m*m+1) < 700)//平行判定
+            {
+                continue;
+            }
+            else
+            {
+                int ymin = m*0+b;
+                int y1min = lines1[0].m * 0 +lines1[0].b;
+                if(fabs(y1min-ymin)<500)
+                    continue;
+                int xmin = -1*b/m;
+                int x1min = -1* lines1[0].b / lines1[0].m;
+                if(fabs(xmin-x1min)<500)
+                    continue;
             }
 
             lines1.push_back(Line{m,b});
             cout<<"In line1"<<endl;
+            edgeCounting ++;
         }
         else if(lines2.size()==0)
         {
             lines2.push_back(Line{m,b});
             cout<<"In line2"<<endl;
+            edgeCounting ++;
         }
         else if(fabs(atan(-1/lines2[0].m)-atan(-1/m)) < delta || fabs(atan(-1/lines2[0].m)-atan(-1/m) + 3.14) < delta || fabs(atan(-1/lines2[0].m)-atan(-1/m) - 3.14) < delta)
         {
-            if(fabs(lines2[0].b-b)<10)
+            if(lines2.size()==2)
             {
                 continue;
+            }
+            else if(fabs(lines2[0].m-m)<10 && fabs(b-lines2[0].b)/sqrt(m*m+1) < 700)
+            {
+                continue;
+            }
+            else
+            {
+                int ymin = m*0+b;
+                int y1min = lines2[0].m * 0 +lines2[0].b;
+                if(fabs(y1min-ymin)<500)
+                    continue;
+                int xmin = -1*b/m;
+                int x1min = -1* lines2[0].b / lines2[0].m;
+                if(fabs(xmin-x1min)<500)
+                    continue;
             }
 
             lines2.push_back(Line{m,b});
             cout<<"In line2"<<endl;
+            edgeCounting ++;
         }
         else
         {
+            if(edgeCounting == EDG_NUM)
+                break;
             continue;
         }
 
@@ -227,75 +263,16 @@ vector<Point> Hough::find_point(void)
         else{
             ans.draw_line(xmin,y0,xmax,y1,blue);
         }
-
-        edgeCounting ++;
-        if(edgeCounting == EDG_NUM)
-            break;
 */
+
+
     }
 
-    int l1_index1 = -1;
-    int l1_index2 = -1;
-    int l2_index1 = -1;
-    int l2_index2 = -1;
+    int l1_index1 = 0;
+    int l1_index2 = 1;
+    int l2_index1 = 0;
+    int l2_index2 = 1;
     //according to back number
-    cout<<"line1 number"<<lines1.size()<<endl;
-    cout<<"line2 number"<<lines2.size()<<endl;
-
-    double max1 = 0.0, max2 = 0.0;
-    for(int i = 0;i<lines1.size();i++)
-    {
-        int counting = 0;
-        for(int x = 10;x<edge.width()-10;x++)
-        {
-            int y = (double) lines1[i].m*x+lines1[i].b;
-            if(y<10 || y>edge.height()-10)
-                continue;
-            else if(edge(x,y,0)==255)
-                counting++;
-        }
-        double ratio = (double) counting/edge.width();
-        if(ratio>max1)
-        {
-            max2 = max1;
-            l1_index2 = l1_index1;
-            max1 = ratio;
-            l1_index1 = i;
-        }
-        else if(ratio>max2)
-        {
-            max2 = ratio;
-            l1_index2 = i;
-        }
-    }
-    cout<<"line1"<<max1<<" "<<max2<<endl;
-    max1 = 0.0,max2 = 0.0;
-    for(int i = 0;i<lines2.size();i++)
-    {
-        int counting = 0;
-        for(int x = 0;x<edge.width();x++)
-        {
-            int y = (double) lines2[i].m*x+lines2[i].b;
-            if(y<0 || y>edge.height())
-                continue;
-            else if(edge(x,y,0)==255)
-                counting++;
-        }
-        double ratio = (double) counting/edge.width();
-        if(ratio>max1)
-        {
-            max2 = max1;
-            l2_index2 = l2_index1;
-            max1 = ratio;
-            l2_index1 = i;
-        }
-        else if(ratio>max2)
-        {
-            max2 = ratio;
-            l2_index2 = i;
-        }
-    }
-    cout<<"line2"<<max1<<" "<<max2<<endl;
     cout<<"y = "<<lines1[l1_index1].m<<"x+"<<lines1[l1_index1].b<<endl;
     cout<<"y = "<<lines1[l1_index2].m<<"x+"<<lines1[l1_index2].b<<endl;
     cout<<"y = "<<lines2[l2_index1].m<<"x+"<<lines2[l2_index1].b<<endl;
@@ -304,6 +281,7 @@ vector<Point> Hough::find_point(void)
     drawLines(ans,lines1[l1_index2].m,lines1[l1_index2].b);
     drawLines(ans,lines2[l2_index1].m,lines2[l2_index1].b);
     drawLines(ans,lines2[l2_index2].m,lines2[l2_index2].b);
+    //ans.display();
     ans.save("ans.bmp");
     cout<<"draw line over"<<endl;
     //intersection point of two lines
