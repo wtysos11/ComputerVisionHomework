@@ -69,7 +69,7 @@
 	<iostream>
 	"CImg.h"
 
-1544862391 source:c:\users\wtysos11\desktop\test\computervisionhomework\main.cpp
+1544951480 source:c:\users\wtysos11\desktop\test\computervisionhomework\main.cpp
 	"CImg.h"
 	"meanShift.h"
 	<iostream>
@@ -140,25 +140,27 @@
 	"CImg.h"
 	"hough.h"
 
-1544870530 c:\users\wtysos11\desktop\test\computervisionhomework\hough.h
+1544935835 c:\users\wtysos11\desktop\test\computervisionhomework\hough.h
 	"CImg.h"
 	"area.h"
 	<string>
 
-1544870633 c:\users\wtysos11\desktop\test\computervisionhomework\area.h
+1544934924 c:\users\wtysos11\desktop\test\computervisionhomework\area.h
 	<cmath>
 	<vector>
 
-1544860070 source:c:\users\wtysos11\desktop\test\computervisionhomework\hough.cpp
+1544948275 source:c:\users\wtysos11\desktop\test\computervisionhomework\hough.cpp
 	"hough.h"
 	<cmath>
 	<iostream>
 
-1544867724 c:\users\wtysos11\desktop\test\computervisionhomework\meanshift.h
+1544952891 c:\users\wtysos11\desktop\test\computervisionhomework\meanshift.h
 	"CImg.h"
 	"hough.h"
 	<vector>
 	<string>
 	<iostream>
+	<algorithm>
 	<utility>
+	<ctime>
 

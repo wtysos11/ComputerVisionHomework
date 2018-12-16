@@ -32,7 +32,11 @@
 			<Add option="-Wall" />
 		</Compiler>
 		<Unit filename="CImg.h" />
+		<Unit filename="area.h" />
+		<Unit filename="hough.cpp" />
+		<Unit filename="hough.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="meanShift.h" />
 		<Unit filename="otsu.h" />
 		<Extensions>
 			<code_completion />
