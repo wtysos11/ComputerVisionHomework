@@ -302,7 +302,7 @@ vector<Point> Hough::find_point(void)
     drawLines(ans,lines1[l1_index2].m,lines1[l1_index2].b);
     drawLines(ans,lines2[l2_index1].m,lines2[l2_index1].b);
     drawLines(ans,lines2[l2_index2].m,lines2[l2_index2].b);
-    //ans.display();
+    ans.display();
     cout<<"draw line over"<<endl;
     //intersection point of two lines
     vector<Point> intersection;

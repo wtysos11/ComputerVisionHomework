@@ -4,10 +4,10 @@
 #include <vector>
 using namespace std;
 struct Point{
-    int x;
-    int y;
-    int value;
-    Point(int _x,int _y,int _mag):x(_x),y(_y),value(_mag){}
+    double x;
+    double y;
+    double value;
+    Point(double _x,double _y,double _mag):x(_x),y(_y),value(_mag){}
     Point():x(0),y(0),value(0){}
     bool operator<(const Point& rhs) const{
         return value<rhs.value;

@@ -180,10 +180,12 @@ class meanShift
 {
 private:
     CImg<int> source;
+    CImg<int> origin;
 public:
     meanShift(string filename)
     {
         source = CImg<int>(filename.c_str());
+        origin = source;
     }
 
     void compute(void)
@@ -301,12 +303,63 @@ public:
 
         Hough hough(edge,edge);
         vector<Point> intersections(hough.find_point());
-
+/*
         for(int i = 0;i<4;i++)
         {
             cout<<intersections[i].x<<" "<<intersections[i].y<<endl;
         }
-    }
+        bool shortFirst = true;
+        if(pow(intersections[1].x-intersections[0].x,2) +pow(intersections[1].y-intersections[0].y,2) v pow(intersections[1].x-intersections[2].x,2) +pow(intersections[1].y-intersections[2].y,2))
+            shortFirst = false;
+
+
+        vector<vector<double>> from,to;
+        //短边在前
+        if(shortFirst)
+        {
+            for(int i = 0;i<4;i++)
+            {
+                to.push_back(vector<double>{intersections[i].x,intersections[i].y});
+            }
+        }
+        else
+        {
+            for(int i = 1;i<4;i++)
+            {
+                to.push_back(vector<double>{intersections[i].x,intersections[i].y});
+            }
+            to.push_back(vector<double>{intersections[0].x,intersections[0].y});
+        }
+        double ra = 4;
+        int a4w = 210 * ra,a4h = 297 * ra;
+
+        from.push_back(vector<double>{0,0});
+        from.push_back(vector<double>{a4w,0});
+        from.push_back(vector<double>{a4w,a4h});
+        from.push_back(vector<double>{0,a4h});
+        vector<double> parameter(affine_fit(from,to));
+        for(int i = 0;i<parameter.size();i++)
+        {
+            cout<<parameter[i]<<endl;
+        }
+        if(parameter.size()==0)
+        {
+            cout<<"参数错误！"<<endl;
+            return;
+        }
+
+        CImg<int> a4(a4w,a4h,1,3,0);
+        cimg_forXY(a4,x,y)
+        {
+            int aimX = (double)parameter[0] * x + parameter[1] *y + parameter[2];
+            int aimY = (double)parameter[3] * x + parameter[4] *y + parameter[5];
+            for(int i = 0;i<3;i++)
+                a4(x,y,i) = origin(aimX,aimY,i);
+        }
+        origin.display();
+        a4.display();
+
+    }*/
 };
 
 
