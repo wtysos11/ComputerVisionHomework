@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <utility>
 #include <ctime>
+#include <fstream>
 using namespace std;
 using namespace cimg_library;
 /*
@@ -157,7 +158,7 @@ public:
     {
         time_t start = time(NULL);
         int width = source.width(),height = source.height();
-        const int h = 200;//窗口
+        const int h = 400;//窗口
         const double dist = 50;//颜色空间
 
         const double maxSpaceDist = 3;
@@ -265,7 +266,6 @@ public:
                 }
             }
         }
-
         Hough hough(edge,edge);
         vector<Point> intersections(hough.find_point());
         hough.clear();
@@ -327,7 +327,6 @@ public:
             for(int i = 0;i<3;i++)
                 a4(x,y,i) = origin(aimX,aimY,i);
         }
-
         number_specific(a4,9);
 
     }
@@ -335,11 +334,11 @@ public:
     void number_specific(CImg<int> a4,int ansNum)
     {
         //对图像进行二值化处理
-
+        a4.display();
         cimg_forXY(a4,x,y)
         {
             a4(x,y,0) = (299*a4(x,y,0)+587*a4(x,y,1)+114*a4(x,y,2)+500)/1000;
-            if(a4(x,y,0) > 90|| (x<0.2*a4.width() || x>0.8*a4.width() || y<0.2*a4.height() || y>0.8*a4.height()) )
+            if(a4(x,y,0) > 140|| (x<0.2*a4.width() || x>0.8*a4.width() || y<0.2*a4.height() || y>0.8*a4.height()) )
             {
                 a4(x,y,0) = a4(x,y,1) = a4(x,y,2) = 255;
             }
@@ -372,8 +371,137 @@ public:
         }
         a4.display();
         //垂直灰度和水平灰度
+        vector<int> xx(a4.width(),0),yy(a4.height(),0);
+        cimg_forXY(a4,x,y)
+        {
+            if(a4(x,y,0)==0)
+            {
+                xx[x]++;
+                yy[y]++;
+            }
+        }
+        int xmin,xmax,ymin,ymax;
+        int deltaStep = 5;
+        int counter = 0;
+        for(int i = 0.2*a4.width() ;i<0.8*a4.width();i++)
+        {
+            if(xx[i]>deltaStep)
+            {
+                counter++;
+                if(counter>3)
+                {
+                    xmin = i;
+                    break;
+                }
+            }
+        }
+        counter = 0;
+        for(int i = 0.8*a4.width();i>0.2*a4.width();i--)
+        {
+
+            if(xx[i]>deltaStep)
+            {
+                counter++;
+                if(counter>3)
+                {
+                    xmax = i;
+                    break;
+
+                }
+            }
+        }
+        counter = 0;
+        for(int i = 0.2*a4.height() ;i<0.8*a4.height();i++)
+        {
+            if(yy[i]>deltaStep)
+            {
+                counter++;
+                if(counter>3)
+                {
+                    ymin = i;
+                    break;
+                }
+            }
+        }
+        counter=0;
+        for(int i = 0.8*a4.height();i>0.2*a4.height();i--)
+        {
+            if(yy[i]>deltaStep)
+            {
+                counter++;
+                if(counter>3)
+                {
+                    ymax = i;
+                    break;
+                }
+
+            }
+        }
+        cout<<"x and y"<<endl;
+        cout<<xmin<<" "<<xmax<<endl;
+        cout<<ymin<<" "<<ymax<<endl;
         //提取4个顶点，转换到32*32矩阵上
+        vector<vector<double>> from,to;
+        from.push_back(vector<double>{0,0});
+        from.push_back(vector<double>{32,0});
+        from.push_back(vector<double>{32,32});
+        from.push_back(vector<double>{0,32});
+        to.push_back(vector<double>{xmin,ymin});
+        to.push_back(vector<double>{xmax,ymin});
+        to.push_back(vector<double>{xmax,ymax});
+        to.push_back(vector<double>{xmin,ymax});
+
+        vector<double> parameter(affine_fit(from,to));
+        CImg<int> mat(32,32,1,3,0);
+        cimg_forXY(mat,x,y)
+        {
+            int aimX = (double)parameter[0] * x + parameter[1] *y + parameter[2];
+            int aimY = (double)parameter[3] * x + parameter[4] *y + parameter[5];
+
+            mat(x,y,0) = mat(x,y,1) = mat(x,y,2) = 255;
+            bool over = false;
+            double deltaX = (double)(xmax-xmin)/32,deltaY = (double)(ymax-ymin)/32;
+            for(int i = aimX - deltaX;i<=aimX+deltaX && !over;i++)
+            {
+                for(int j = aimY - deltaY;j<=aimY+deltaY && !over;j++)
+                {
+                    if(a4(i,j,0) == 0)
+                    {
+                        mat(x,y,0) = mat(x,y,1) = mat(x,y,2) = 0;
+                        over = true;
+                    }
+                }
+            }
+        }
+        mat.display();
         //对32*32矩阵进行计数，输出到csv中
+        vector<int> ans;
+        for(int i = 0;i<8;i++)
+        {
+            for(int j = 0;j<8;j++)
+            {
+                int counting = 0;
+                for(int x = 0;x<4;x++)
+                {
+                    for(int y = 0;y<4;y++)
+                    {
+                        if(mat(i+x,y+j,0)==0)
+                        {
+                            counting++;
+                        }
+                    }
+                }
+                ans.push_back(counting);
+            }
+        }
+        ofstream fout("out.txt",ios::app);
+        for(int i = 0;i<64;i++)
+        {
+            fout<<ans[i]<<",";
+        }
+        fout<<ansNum<<endl;
+        fout.close();
+
     }
 };
 
