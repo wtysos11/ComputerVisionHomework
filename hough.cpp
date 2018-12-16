@@ -22,6 +22,13 @@ void drawLines(CImg<int> &im,double m,double b)
         im.draw_line(xmin,y0,xmax,y1,blue);
 }
 
+Point getIntesection(Line l1,Line l2)
+{
+    double x = -1 * (l1.b-l2.b)/(l1.m-l2.m);
+    double y = l1.m*x+l1.b;
+    return Point{x,y,0};
+}
+
 Hough::Hough()
 {
 
@@ -35,7 +42,7 @@ Hough::Hough(string s)
 }
 
 
-void Hough::find_point(void)
+vector<Point> Hough::find_point(void)
 {
     cout<<"hough point"<<endl;
     double maxDistance = (edge.width() + edge.height()) * 2;
@@ -63,8 +70,6 @@ void Hough::find_point(void)
             }
         }
     }
-    edge.display();
-    hough_space.display();
 
     Area area;
     vector<Point> coordinate = vector<Point>();
@@ -297,83 +302,15 @@ void Hough::find_point(void)
     drawLines(ans,lines1[l1_index2].m,lines1[l1_index2].b);
     drawLines(ans,lines2[l2_index1].m,lines2[l2_index1].b);
     drawLines(ans,lines2[l2_index2].m,lines2[l2_index2].b);
-    ans.display();
+    //ans.display();
     cout<<"draw line over"<<endl;
     //intersection point of two lines
-    /*
-    cout<<"intersections"<<endl;
-    vector<pair<double,double> > intersections;
-    for(unsigned int i = 1 ;i<lines.size();i++)
-    {
-        int x0 = 0;
-        int x1 = 0;
-        int y0 = 0;
-        int y1 = 0;
-        for(unsigned int j = 0 ;j<=i-1;j++)
-        {
-            double m0 = lines[i].m;
-            double m1 = lines[j].m;
-            double b0 = lines[i].b;
-            double b1 = lines[j].b;
-
-            double x = -1.0*(b1-b0)/(m1-m0);
-            double y = m0*x+b0;
-            if(x>=0 && x<source.width() && y>=0 && y<source.height())
-            {
-                if(x0==0&y0==0)
-                {
-                    x0 = x;
-                    y0 = y;
-                }
-                else
-                {
-                    x1 = x;
-                    y1 = y;
-                }
-                bool isRepeat = false;
-                for(unsigned int k = 0;k<intersections.size();k++)
-                {
-                    if(abs((int)(intersections[k].first - x)) < 10.0 && abs((int)intersections[k].second-y)<10.0)
-                    {
-                        isRepeat = true;
-                        break;
-                    }
-                }
-                if(isRepeat)
-                    continue;
-                cout<<x<<" "<<y<<endl<<endl;
-
-                intersections.push_back(make_pair(x,y));
-            }
-        }
-        const double red[]={128,0,0};
-        if(x1!=0 && y1!=0)
-            ans.draw_line(x0,y0,x1,y1,red);
-    }
-
-    cimg_forXY(ans,x,y)
-    {
-        if(ans(x,y,0) == 128 && edge(x,y)>GRADLIMIT)
-        {
-            ans(x,y,0) = 255;
-        }
-        else if(ans(x,y,0) == 128)
-        {
-            ans(x,y,0) = 0;
-            ans(x,y,2) = 255;
-        }
-    }
-
-
-    for(unsigned int i = 0;i<intersections.size();i++)
-    {
-        int x = intersections[i].first;
-        int y = intersections[i].second;
-        const double color[]={255,0,255};
-        ans.draw_circle(x,y,5,color);
-    }*/
-
-
+    vector<Point> intersection;
+    intersection.push_back(getIntesection(lines1[l1_index1],lines2[l1_index1]));
+    intersection.push_back(getIntesection(lines1[l1_index1],lines2[l1_index2]));
+    intersection.push_back(getIntesection(lines1[l1_index2],lines2[l1_index2]));
+    intersection.push_back(getIntesection(lines1[l1_index2],lines2[l1_index1]));
+    return intersection;
 }
 
 

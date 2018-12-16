@@ -33,7 +33,7 @@ public:
         ans = source;
         edge = edge2;
     }
-    void find_point();
+    vector<Point> find_point();
     void clear(void);
 };
 
