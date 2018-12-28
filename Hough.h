@@ -7,7 +7,10 @@
 #include <utility>
 using namespace cimg_library;
 using namespace std;
-
+#define KP 13 //K max point
+#define VERTEXMAX 64//如果点的欧式距离的平方小于这个值，则视为一个点
+#define DEBUG
+#define HEIGHTDIFF 50
 typedef int eleType;//CImg element type
 /*
 重写Hough变换：
@@ -28,6 +31,37 @@ typedef int eleType;//CImg element type
 如果是正放，则找到最上面的直线，寻找其最左侧的点和最右侧的点。
     然后从其左上开始输出
 */
+
+struct Vertex
+{
+    int tx,ty;//total
+    int num;//influence number
+    int x,y;//output value
+    int weight;
+    Vertex(int xx,int yy)
+    {
+        x = xx,y = yy;
+        tx = x,ty = y;
+
+        num = 1;
+        weight = 1;
+    }
+    void addPoint(int xx,int yy)
+    {
+        tx += xx;
+        ty += yy;
+        num ++;
+        x = tx/num;
+        y = ty/num;
+        weight++;
+    }
+    bool checkClosePoint(int xx,int yy)
+    {
+        return pow(xx-x,2)+pow(yy-y,2) <= VERTEXMAX;
+    }
+
+};
+
 class Hough{
 private:
     CImg<eleType> edge;
@@ -44,9 +78,9 @@ public:
     //make hough space
     void houghSpaceMapping();
     //vote for 13 lines, lines vote for 4 interchange points
-    void find4InterchangePoints();
+    vector<Vertex> find4InterchangePoints();
     //find 4 points in correct order.
-    vector<pair<int,int>> getA4Points();
+    vector<pair<int,int>> getA4Points(vector<Vertex>& vertexs);
 
 
 };
