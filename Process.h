@@ -5,9 +5,9 @@
 using namespace cimg_library;
 
 //��ɫͼ��ת��Ϊ�Ҷ�ͼ
-CImg<int> grayTheImg(const CImg<int>& SrcImg);
+CImg<int> makeGrayImage(const CImg<int>& src);
 //�ԻҶ�ͼ�����²���
-CImg<int> downSampleTheImg(const CImg<int>& SrcGrayImg, float sampleSquareSize);
+CImg<int> downSample(const CImg<int>& SrcGrayImg, float sampleSquareSize);
 
 
 #endif

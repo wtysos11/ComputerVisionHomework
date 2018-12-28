@@ -66,18 +66,36 @@
 	"CImg.h"
 	<stdint.h>
 
-1546001681 source:e:\code\computervision\homeworkfinal\main.cpp
+1546002477 source:e:\code\computervision\homeworkfinal\main.cpp
 	"CImg.h"
 	"Canny.h"
 	"Process.h"
+	"Solution.h"
 	<string>
 	<iostream>
 
-1546001604 e:\code\computervision\homeworkfinal\process.h
+1546002617 e:\code\computervision\homeworkfinal\process.h
 	"CImg.h"
 
-1546001618 source:e:\code\computervision\homeworkfinal\process.cpp
+1546002114 source:e:\code\computervision\homeworkfinal\process.cpp
 	"Process.h"
 	<iostream>
+	<math.h>
+
+1546008657 e:\code\computervision\homeworkfinal\solution.h
+	"CImg.h"
+	"Canny.h"
+	"Process.h"
+	"Hough.h"
+	<string>
+
+1546008459 e:\code\computervision\homeworkfinal\hough.h
+	"CImg.h"
+	<iostream>
+	<vector>
+	<set>
+
+1546008469 source:e:\code\computervision\homeworkfinal\hough.cpp
+	"Hough.h"
 	<math.h>
 

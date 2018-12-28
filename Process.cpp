@@ -3,17 +3,16 @@
 #include <math.h>
 using namespace std;
 
-CImg<int> grayTheImg(const CImg<int>& SrcImg) {
-	CImg<int> answer = CImg<int>(SrcImg._width, SrcImg._height, 1, 1, 0);
-	cimg_forXY(answer, x, y) {
-		answer(x, y, 0) = (int)round((double)SrcImg(x, y, 0, 0) * 0.299 +
-									(double)SrcImg(x, y, 0, 1) * 0.587 +
-									(double)SrcImg(x, y, 0, 2) * 0.114);
+CImg<int> makeGrayImage(const CImg<int>& src) {
+	CImg<int> gray = CImg<int>(src.width(), src.height(), 1, 1, 0);
+	cimg_forXY(gray, x, y)
+    {
+		gray(x, y, 0) = (int)round((double)src(x, y, 0, 0) * 0.299 + (double)src(x, y, 0, 1) * 0.587 + (double)src(x, y, 0, 2) * 0.114);
 	}
-	return answer;
+	return gray;
 }
 
-CImg<int> downSampleTheImg(const CImg<int>& SrcGrayImg, float sampleSquareSize) {
+CImg<int> downSample(const CImg<int>& SrcGrayImg, float sampleSquareSize) {
 	double sampleSize = (double)(SrcGrayImg._width + SrcGrayImg._height) / sampleSquareSize / 2.0;
 	int anWidth = (int)round(SrcGrayImg._width / sampleSize);
 	int anHeight = (int)round(SrcGrayImg._height / sampleSize);
