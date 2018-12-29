@@ -82,7 +82,7 @@
 	<iostream>
 	<math.h>
 
-1546056021 e:\code\computervision\homeworkfinal\solution.h
+1546057289 e:\code\computervision\homeworkfinal\solution.h
 	"CImg.h"
 	"Canny.h"
 	"Process.h"
@@ -91,7 +91,7 @@
 	<string>
 	<iostream>
 
-1546055663 e:\code\computervision\homeworkfinal\hough.h
+1546057301 e:\code\computervision\homeworkfinal\hough.h
 	"CImg.h"
 	<string>
 	<vector>
@@ -104,7 +104,7 @@
 	<algorithm>
 	<iostream>
 
-1546055779 e:\code\computervision\homeworkfinal\a4correct.h
+1546057057 e:\code\computervision\homeworkfinal\a4correct.h
 	"Hough.h"
 	"CImg.h"
 

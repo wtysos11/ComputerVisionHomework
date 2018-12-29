@@ -119,12 +119,21 @@ vector<double> affine_fit(vector<vector<double>> from,vector<vector<double>> to)
 
 }
 
-CImg<int> transformToA4(CImg<int>& origin,vector<Vertex>& vertexs)
+CImg<int> transformToA4(CImg<int>& origin,int vwidth,int vheight,vector<Vertex>& vertexs)
 {
+    double ra_x = (double)origin.width()/vwidth;
+    double ra_y = (double)origin.height()/vheight;
+#ifdef DEBUG
+    cout<<"ratio x:"<<ra_x<<"\t ratio_y"<<ra_y<<endl;
+    cout<<"Point in origin graph"<<endl;
+#endif
     vector<vector<double>> from,to;
     for(int i = 0 ;i<4;i++)
     {
-        to.push_back(vector<double>{vertexs[i].x,vertexs[i].y});
+        to.push_back(vector<double>{(double)vertexs[i].x * ra_x,(double)vertexs[i].y*ra_y});
+#ifdef DEBUG
+    cout<<(double)vertexs[i].x * ra_x<<"\t"<<(double)vertexs[i].y*ra_y<<endl;
+#endif
     }
     double ra = 4;
     int a4w = 210 * ra,a4h = 297 * ra;
@@ -134,13 +143,7 @@ CImg<int> transformToA4(CImg<int>& origin,vector<Vertex>& vertexs)
     from.push_back(vector<double>{a4w,a4h});
     from.push_back(vector<double>{0,a4h});
     vector<double> parameter(affine_fit(from,to));
-#ifdef DEBUG
-    cout<<"parameter"<<endl;
-    for(int i = 0;i<parameter.size();i++)
-    {
-        cout<<parameter[i]<<endl;
-    }
-#endif
+
     CImg<int> a4(a4w,a4h,1,1,0);
     cimg_forXY(a4,x,y)
     {

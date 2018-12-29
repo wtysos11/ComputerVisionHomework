@@ -8,7 +8,7 @@
 #include "A4Correct.h"
 #include <string>
 #include <iostream>
-#define DEBUG
+
 using namespace std;
 using namespace cimg_library;
 #define DownSampledSquareSize 500.0
@@ -40,10 +40,8 @@ struct Solution{
         {
             cout<<top4[i].x<<"\t"<<top4[i].y<<endl;
         }
-        cannyImage.display("edge");
 #endif
-        a4Image = transformToA4(downsampleImg,top4);
-        a4Image.display();
+        a4Image = transformToA4(source,downsampleImg.width(),downsampleImg.height(),top4);
     }
 
     void clear()
