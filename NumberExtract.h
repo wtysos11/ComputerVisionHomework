@@ -10,7 +10,8 @@
 //垂直灰度直方图的顶点阈值
 #define VERTICAL_GRAY_THRESHOLD 10
 #define MARGIN 0.05//A4提取误差边缘
-#define VERTICAL_DIFF 15//垂直灰度直方图顶点相差的距离
+
+#define VERTICAL_NUM 9//有9条垂直方向的中心线
 using namespace std;
 using namespace cimg_library;
 
@@ -44,6 +45,7 @@ public:
     vector<int> computeVerticalGrayHist();
     vector<int> computeHorizontalGrayHist(int yl,int yh);//histogram in the range
     vector<int> getVerticallines();//get vertical center lines
+    vector<int> findPoint(int x,int y,vector<bool>& isVisited);
 
 //清空
     void clear()
