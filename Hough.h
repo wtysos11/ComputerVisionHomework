@@ -6,6 +6,7 @@
 #include <vector>
 #include <utility>
 #include <iostream>
+
 using namespace cimg_library;
 using namespace std;
 #define KP 13 //K max point

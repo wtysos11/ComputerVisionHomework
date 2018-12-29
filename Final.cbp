@@ -31,11 +31,14 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="A4Correct.h" />
 		<Unit filename="CImg.h" />
 		<Unit filename="Canny.cpp" />
 		<Unit filename="Canny.h" />
 		<Unit filename="Hough.cpp" />
 		<Unit filename="Hough.h" />
+		<Unit filename="NumberExtract.cpp" />
+		<Unit filename="NumberExtract.h" />
 		<Unit filename="Process.cpp" />
 		<Unit filename="Process.h" />
 		<Unit filename="Solution.h" />

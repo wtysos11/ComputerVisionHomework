@@ -6,6 +6,7 @@
 #include "Process.h"
 #include "Hough.h"
 #include "A4Correct.h"
+#include "NumberExtract.h"
 #include <string>
 #include <iostream>
 
@@ -32,16 +33,21 @@ struct Solution{
         gray = makeGrayImage(source);
         downsampleImg = downSample(gray, DownSampledSquareSize);
         cannyImage = canny(downsampleImg, downsampleImg.width(), downsampleImg.height());
-
         Hough hough(cannyImage);
         vector<Vertex> top4(hough.compute());
- #ifdef DEBUG
+#ifdef DEBUG
+        cout<<"four vertexs in downsample graph"<<endl;
         for(int i = 0;i<4;i++)
         {
             cout<<top4[i].x<<"\t"<<top4[i].y<<endl;
         }
 #endif
         a4Image = transformToA4(source,downsampleImg.width(),downsampleImg.height(),top4);
+        NumberExtract num(a4Image);
+        num.compute();
+        a4Image.save("a4.bmp");
+
+        num.clear();
     }
 
     void clear()
