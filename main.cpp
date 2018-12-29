@@ -12,5 +12,6 @@ int main(void)
 {
     Solution s("test.bmp");
     s.mainProcess();
+    s.clear();
     return 0;
 }

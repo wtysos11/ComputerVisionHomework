@@ -6,6 +6,8 @@
 #include "Process.h"
 #include "Hough.h"
 #include <string>
+#include <iostream>
+#define DEBUG
 using namespace std;
 using namespace cimg_library;
 #define DownSampledSquareSize 500.0
@@ -24,8 +26,16 @@ struct Solution{
         downsampleImg = downSample(gray, DownSampledSquareSize);
 
         cannyImage = canny(downsampleImg, downsampleImg.width(), downsampleImg.height());
-        cannyImage.display("EdgeImg");
 
+        Hough hough(cannyImage);
+        vector<Vertex> top4(hough.compute());
+ #ifdef DEBUG
+        for(int i = 0;i<4;i++)
+        {
+            cout<<top4[i].x<<"\t"<<top4[i].y<<endl;
+        }
+#endif
+        cannyImage.display("EdgeImg");
     }
 
     void clear()

@@ -11,6 +11,7 @@ using namespace std;
 #define VERTEXMAX 64//如果点的欧式距离的平方小于这个值，则视为一个点
 #define DEBUG
 #define HEIGHTDIFF 50
+#define PI 3.1415926
 typedef int eleType;//CImg element type
 /*
 重写Hough变换：
@@ -67,20 +68,18 @@ private:
     CImg<eleType> edge;
     CImg<eleType> ans;
     CImg<eleType> hough_space;
-    vector<pair<int,int>> lines;
-    vector<pair<int,int>> points;//保存的是乱序的节点
 public:
     Hough();
     //init CImg edge
     Hough(CImg<eleType> canny);
     //compute entrance
-    vector<pair<int,int>> compute();
+    vector<Vertex> compute();
     //make hough space
     void houghSpaceMapping();
     //vote for 13 lines, lines vote for 4 interchange points
     vector<Vertex> find4InterchangePoints();
     //find 4 points in correct order.
-    vector<pair<int,int>> getA4Points(vector<Vertex>& vertexs);
+    vector<Vertex> getA4Points(vector<Vertex>& vertexs);
 
 
 };

@@ -12,7 +12,7 @@ Hough::Hough()
 //init CImg edge
 Hough::Hough(CImg<eleType> canny)
 {
-	edge = CImg<int>(canny.width(),canny.height, 1, 1, 0);
+	edge = CImg<int>(canny.width(),canny.height(), 1, 1, 0);
 	int maxDistance = (canny.width() + canny.height()) * 2;
 
 	cimg_forXY(edge, x, y) {
@@ -22,15 +22,16 @@ Hough::Hough(CImg<eleType> canny)
 	hough_space = CImg<int>(360,maxDistance,1,1,0);
 }
 //compute entrance
-vector<pair<int,int>> Hough::compute()
+vector<Vertex> Hough::compute()
 {
     houghSpaceMapping();
-    find4InterchangePoints();
-    return getA4Points();
+    vector<Vertex> vertexs(find4InterchangePoints());
+    return getA4Points(vertexs);
 }
 //make hough space
 void Hough::houghSpaceMapping()
 {
+    int maxDistance = (edge.width() + edge.height()) * 2;
     vector<double> cosCache(360);
     vector<double> sinCache(360);
 
@@ -133,7 +134,7 @@ vector<Vertex> Hough::find4InterchangePoints()
             bool foundVertex = false;
             for(int k = 0;k<vertexs.size();k++)
             {
-                if(vertexs[k].checkClosePoint)
+                if(vertexs[k].checkClosePoint(xx,yy))
                 {
                     vertexs[k].addPoint(xx,yy);
                     foundVertex = true;
@@ -156,7 +157,7 @@ vector<Vertex> Hough::find4InterchangePoints()
 
 }
 //find 4 points in correct order.
-vector<pair<int,int>> Hough::getA4Points(vector<Vertex>& vertexs)
+vector<Vertex> Hough::getA4Points(vector<Vertex>& vertexs)
 {
     vector<Vertex> topv;
     for(int i = 0;i<4;i++)
@@ -211,20 +212,35 @@ vector<pair<int,int>> Hough::getA4Points(vector<Vertex>& vertexs)
          {
              return v1.y<v2.y;
          });
-    if(abs(topv[0]-topv[1])<HEIGHTDIFF)//正放的
+
+    if(abs(topv[0].y-topv[1].y)<HEIGHTDIFF)//正放的
     {
         if(topv[0].x>topv[1].x)
         {
             swap(topv[0],topv[1]);
         }
 
-        if(pow(topv[1].x-topv[2].x,2)+pow(topv[1].y-topv[2].y,2) > pow(topv[1].x-topv[3].x,2)+pow(topv[1].y-topv[3].y,2))//dist 1->2 > dist 1->3
+        if(oppoPoint != 2)
         {
             swap(topv[2],topv[3]);
         }
     }
     else//A4纸是斜着放的
     {
-
+        //以最高的为第一个点
+        if(pow(topv[0].x-topv[1].x,2)+pow(topv[0].y-topv[1].y,2) > pow(topv[0].x-topv[2].x,2)+pow(topv[0].y-topv[2].y,2))//dist 0->1 > dist 0->2
+        {
+            swap(topv[1],topv[2]);
+            if(oppoPoint == 1)
+                oppoPoint = 2;
+            else if(oppoPoint == 2)
+                oppoPoint = 1;
+        }
+        //按照距离来不行，应该按照朝向来
+        if(oppoPoint !=2)
+        {
+            swap(topv[2],topv[3]);
+        }
     }
+    return topv;
 }
