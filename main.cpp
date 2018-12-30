@@ -15,7 +15,7 @@ using namespace cimg_library;
 int main(void)
 {
     //训练BP神经网络
-    /*
+/*
     BPnet* bp = BPnet::GetInstance();
     srand((unsigned)time(NULL));
 //读取训练数据
@@ -49,7 +49,7 @@ int main(void)
         }
     }
     cout<<"BPnet training over"<<endl;
-    */
+*/
     Solution s("test.bmp");
     s.mainProcess();
     s.clear();

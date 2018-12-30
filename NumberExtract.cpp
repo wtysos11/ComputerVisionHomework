@@ -183,7 +183,7 @@ vector<double> LineFitLeastSquares(vector<int> data_x, vector<int> data_y)
 
 void NumberExtract::compute()
 {
-    //BPnet* bp = BPnet::GetInstance();
+    BPnet* bp = BPnet::GetInstance();
     ofstream fout("imageOut");
     //处理，得到二值化图像
     getBinaryImg();
@@ -434,7 +434,7 @@ void NumberExtract::compute()
             }
 
             CImg<int> digit(digitSize,digitSize,1,1,0);
-            vector<int> digitData;
+            vector<double> digitData;
             cimg_forXY(digit,dgx,dgy)
             {
                 int aimX = (double)parameter[0] * dgx + parameter[1] *dgy + parameter[2];
@@ -442,7 +442,7 @@ void NumberExtract::compute()
 
                 if(anspaper(aimX,aimY)>0)
                 {
-                    digit(dgx,dgy) = digit(dgx,dgy) + 50 > 255 ? 255 : digit(dgx,dgy) + 50;
+                    digit(dgx,dgy) = anspaper(aimX,aimY) + 100 > 255 ? 255 : anspaper(aimX,aimY) + 100;
                 }
                 else
                 {

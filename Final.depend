@@ -66,7 +66,7 @@
 	"CImg.h"
 	<stdint.h>
 
-1546176842 source:e:\code\computervision\homeworkfinal\main.cpp
+1546180232 source:e:\code\computervision\homeworkfinal\main.cpp
 	"CImg.h"
 	"Canny.h"
 	"Process.h"
@@ -125,10 +125,10 @@
 	"NumberExtract.h"
 	<cmath>
 
-1546174172 source:e:\code\computervision\homeworkfinal\bpnet.cpp
+1546180162 source:e:\code\computervision\homeworkfinal\bpnet.cpp
 	"BPnet.h"
 
-1546175496 e:\code\computervision\homeworkfinal\bpnet.h
+1546180166 e:\code\computervision\homeworkfinal\bpnet.h
 	<cmath>
 	<vector>
 	<cstdlib>
