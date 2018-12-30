@@ -4,6 +4,7 @@
 #include "CImg.h"
 #include <vector>
 #include <iostream>
+#include <utility>
 #define DEBUG
 //二值化图像的分界点
 #define BITHRESHOLD 150

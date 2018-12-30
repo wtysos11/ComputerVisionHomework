@@ -1,19 +1,83 @@
 #include "NumberExtract.h"
+#include <cmath>
+/*************************************************************************
+ ×îĞ¡¶ş³Ë·¨ÄâºÏÖ±Ïß£¬y = a*x + b; n×éÊı¾İ; r-Ïà¹ØÏµÊı[-1,1],fabs(r)->1,ËµÃ÷x,yÖ®¼äÏßĞÔ¹ØÏµºÃ£¬fabs(r)->0£¬x,yÖ®¼äÎŞÏßĞÔ¹ØÏµ£¬ÄâºÏÎŞÒâÒå
+ a = (n*C - B*D) / (n*A - B*B)
+ b = (A*D - B*C) / (n*A - B*B)
+ r = E / F
+ ÆäÖĞ£º
+ A = sum(Xi * Xi)
+ B = sum(Xi)
+ C = sum(Xi * Yi)
+ D = sum(Yi)
+ E = sum((Xi - Xmean)*(Yi - Ymean))
+ F = sqrt(sum((Xi - Xmean)*(Xi - Xmean))) * sqrt(sum((Yi - Ymean)*(Yi - Ymean)))
+**************************************************************************/
+
+vector<double> LineFitLeastSquares(vector<int> data_x, vector<int> data_y)
+{
+    int data_n = data_x.size();
+	double A = 0.0;
+	double B = 0.0;
+	double C = 0.0;
+	double D = 0.0;
+	double E = 0.0;
+	double F = 0.0;
+
+	for (int i=0; i<data_n; i++)
+	{
+		A += data_x[i] * data_x[i];
+		B += data_x[i];
+		C += data_x[i] * data_y[i];
+		D += data_y[i];
+	}
+
+	// ¼ÆËãĞ±ÂÊaºÍ½Ø¾àb
+	double a, b, temp = 0;
+	if( temp = (data_n*A - B*B) )// ÅĞ¶Ï·ÖÄ¸²»Îª0
+	{
+		a = (data_n*C - B*D) / temp;
+		b = (A*D - B*C) / temp;
+	}
+	else
+	{
+		a = 1;
+		b = 0;
+	}
+
+	// ¼ÆËãÏà¹ØÏµÊır
+	double Xmean, Ymean;
+	Xmean = B / data_n;
+	Ymean = D / data_n;
+
+	double tempSumXX = 0.0, tempSumYY = 0.0;
+	for (int i=0; i<data_n; i++)
+	{
+		tempSumXX += (data_x[i] - Xmean) * (data_x[i] - Xmean);
+		tempSumYY += (data_y[i] - Ymean) * (data_y[i] - Ymean);
+		E += (data_x[i] - Xmean) * (data_y[i] - Ymean);
+	}
+	F = sqrt(tempSumXX) * sqrt(tempSumYY);
+
+	double r;
+	r = E / F;
+
+	return vector<double>{a,b};
+}
+
+
 void NumberExtract::compute()
 {
     //´¦Àí£¬µÃµ½¶şÖµ»¯Í¼Ïñ
     getBinaryImg();
     //ÌáÈ¡×Ö·ûĞĞ
-
     vector<int> horiLines(getVerticallines());
     #ifdef DEBUG
-
     cout<<"vertical lines"<<endl;
     for(int i = 0;i<VERTICAL_NUM;i++)
     {
         cout<<horiLines[i]<<endl;
     }
-    bipaper.display();
     #endif // DEBUG
     //¶ÔÓÚÃ¿Ò»¸öÌáÈ¡µÄ×Ö·ûĞĞ½øĞĞ²Ù×÷
     /*
@@ -25,23 +89,24 @@ void NumberExtract::compute()
     */
     for(int i = 0;i<horiLines.size();i++)
     {
+        double deltaParam = 5;
         int st,ed;
         if(i==0)//µÚÒ»¸öµã
         {
-            int delta = (horiLines[i+1] - horiLines[i])/2;
+            int delta = (horiLines[i+1] - horiLines[i])/deltaParam;
             st = horiLines[i]-delta>0?horiLines[i]-delta:0;
             ed = horiLines[i]+delta;
         }
         else if(i==horiLines.size()-1)
         {
-            int delta = (horiLines[i]-horiLines[i-1])/2;
+            int delta = (horiLines[i]-horiLines[i-1])/deltaParam;
             st = horiLines[i]-delta;
             ed = horiLines[i]+delta>=horiLines.size()?horiLines.size()-1:horiLines[i]+delta;
         }
         else
         {
-            st = horiLines[i] - (horiLines[i]-horiLines[i-1])/2;
-            ed = horiLines[i] + (horiLines[i+1]-horiLines[i])/2;
+            st = horiLines[i] - (horiLines[i]-horiLines[i-1])/deltaParam;
+            ed = horiLines[i] + (horiLines[i+1]-horiLines[i])/deltaParam;
         }
 
         //ÔÚËÑË÷Çø¼äÖĞ½øĞĞ»Ò¶ÈÖ±·½Í¼Í³¼Æ
@@ -51,21 +116,35 @@ void NumberExtract::compute()
         int up = 0,down = 0;
         int ver = horiLines[i];
         vector<vector<int>> numbers;
-        for(int x = 0;x<bipaper.width();x++)
+        cout<<"lines"<<i<<" with vertical lines:"<<horiLines[i]<<"\tst:"<<st<<"\ted:"<<ed<<endl;
+        vector<int> data_x;//µÚÒ»´Î¼ÆËãËã³öµÄÖĞĞÄµãµÄx×ø±ê
+        vector<int> data_y;//µÚÒ»´Î¼ÆËãËã³öµÄÖĞĞÄµãµÄy×ø±ê
+        for(int x = MARGIN*bipaper.width();x<(1-MARGIN)*bipaper.width();x++)
         {
+            up = 0,down = 0;
             if(isVisited[x])
                 continue;
             //³¢ÊÔËÑË÷
             while(ver-up>st || ver+down<ed)
             {
+
                 //try to find point up
                 if(ver-up>st)
                 {
-                    //8ÁÚÓòÕÒµã
+                    //25ÁÚÓòÕÒµã
                     if(bipaper(x,ver-up)==0)
                     {
-                        vector<int> cooridinate(findPoint(x,ver-up,isVisited));
-                        numbers.push_back(cooridinate);
+                        vector<int> coordinate(findPoint(x,ver-up,isVisited));
+                        numbers.push_back(coordinate);
+                        data_x.push_back((coordinate[0]+coordinate[2])/2);
+                        data_y.push_back((coordinate[1]+coordinate[3])/2);
+
+                        for(int j = 0;j<4;j++)
+                        {
+                            cout<<coordinate[j]<<"\t";
+                        }
+                        cout<<endl;
+                        break;
                     }
                     up++;
                 }
@@ -74,24 +153,225 @@ void NumberExtract::compute()
                 {
                     if(bipaper(x,ver+down)==0)
                     {
-                        vector<int> cooridinate(findPoint(x,ver+down,isVisited));
-                        numbers.push_back(cooridinate);
+                        vector<int> coordinate(findPoint(x,ver+down,isVisited));
+                        numbers.push_back(coordinate);
+                        data_x.push_back((coordinate[0]+coordinate[2])/2);
+                        data_y.push_back((coordinate[1]+coordinate[3])/2);
+                        for(int j = 0;j<4;j++)
+                        {
+                            cout<<coordinate[j]<<"\t";
+                        }
+                        cout<<endl;
+                        break;
                     }
                     down++;
                 }
             }
         }
+        /*
+            ¸ù¾İËÑË÷µ½µÄµã½ÃÕıÖĞĞÄÏß£¬È»ºóÄâºÏ³öÖ±Ïß£¬ÔÙ´Î½øĞĞËÑË÷
+                ÓÃÒÑ¾­µÃµ½µÄµãµÄÖĞĞÄÀ´ÖØĞÂ½ÃÕıÖĞĞÄÏß
+                ¶ÔÓÚÃ¿Á½¸öÁÙ½üµãÖ®¼ä¼ÆËãĞ±ÂÊ£¬È»ºó¼ÆËãĞ±ÂÊµÄÆ½¾ùÖµ
+                Ñ¡Ôñ×îºóÒ»¸öµã£¬ÄâºÏÖ±Ïß
+                Í¨¹ı¶Ô¸ÃÖ±ÏßÉÏÏÂ½øĞĞÔÙ´ÎËÑË÷
+        */
+        //¸ù¾İÒÑ¾­µÃµ½µÄÖĞĞÄµãÓÃ×îĞ¡¶ş³Ë·¨ÄâºÏ³öÒ»ÌõÖ±Ïß
+        vector<double> para(LineFitLeastSquares(data_x,data_y));
+        double line_k = para[0];
+        double line_b = para[1];
+
+        //¶ÔÕâÌõÖ±ÏßÉÏµÄµã½øĞĞÔÙ´ÎÇóÖµ
+        int uplimit = ver - st;
+        int downlimit = ed - ver;
+        #ifdef DEBUG
+        cout<<"y="<<line_k<<"x+"<<line_b<<endl;
+        cout<<"New Point"<<endl;
+        #endif
+        for(int x = MARGIN*bipaper.width();x<(1-MARGIN)*bipaper.width();x++)
+        {
+            up = 0,down = 0;
+            if(isVisited[x])
+            {
+                continue;
+            }
+            int currentVerticalCenter = round(line_k*x+line_b);
+            if(currentVerticalCenter<MARGIN*bipaper.height() || currentVerticalCenter > (1-MARGIN) * bipaper.height())
+                continue;
+
+            while(up<uplimit || down<downlimit)
+            {
+
+                //try to find point up
+                if(up<uplimit)
+                {
+                    //25ÁÚÓòÕÒµã
+                    if(bipaper(x,currentVerticalCenter-up)==0)
+                    {
+                        vector<int> coordinate(findPoint(x,currentVerticalCenter-up,isVisited));
+                        numbers.push_back(coordinate);
+#ifdef DEBUG
+                        for(int j = 0;j<4;j++)
+                        {
+                            cout<<coordinate[j]<<"\t";
+                        }
+                        cout<<endl;
+#endif
+                        break;
+                    }
+                    up++;
+                }
+                //try to find point down
+                if(down<downlimit)
+                {
+                    if(bipaper(x,currentVerticalCenter+down)==0)
+                    {
+                        vector<int> coordinate(findPoint(x,currentVerticalCenter+down,isVisited));
+                        numbers.push_back(coordinate);
+#ifdef DEBUG
+                        for(int j = 0;j<4;j++)
+                        {
+                            cout<<coordinate[j]<<"\t";
+                        }
+                        cout<<endl;
+#endif
+                        break;
+                    }
+                    down++;
+                }
+            }
+
+        }
+
+
+
         /*¶ÔÃ¿Ò»¸öµÃµ½µÄµã½øĞĞ´¦Àí£¬°´±â£¬Í¶Éäµ½28*28¾ØÕóÉÏ£¬È»ºó×ª»»³É784Î¬ÏòÁ¿½øĞĞ´æ´¢*/
 
 
     }
-
+#ifdef DEBUG
+    bipaper.display();
+#endif
 }
 
 //25ÁÚÓòÕÒµã£¬ÕÒµ½µÄµãµÄ×óÉÏ½ÇµÄxºÍy×ø±êºÍÓÒÏÂ½ÇµÄxºÍy×ø±ê·µ»Ø
-vector<int> NumberExtract::findPoint(int x,int y,vector<bool>& isVisited)
+/*
+Ã¿´Îµü´úµÄÊ±ºò£¬¶ÔÄ¿Ç°ËùÔÚµÄ·½ĞÎÇøÓò½øĞĞÀ©Õ¹£¬Èç¹ûÀ©Õ¹¹ı³ÌÖĞÓĞµã£¬ÔòÏÂÒ»´Î¼ÌĞøÀ©Õ¹
+×îºó¶ÔisVisited½øĞĞ¸üĞÂ
+*/
+void updatePoint(int& xmin,int &xmax,int& ymin,int& ymax,int x,int y)
 {
+    if(x<xmin)
+    {
+        xmin = x;
+    }
+    else if(x>xmax)
+    {
+        xmax = x;
+    }
 
+    if(y<ymin)
+    {
+        ymin = y;
+    }
+    else if(y>ymax)
+    {
+        ymax = y;
+    }
+}
+
+/*
+×¢ÒâÇø¼äÈ¡Öµ²»ÄÜÈ¡µ½(xmin,ymin)->(xmax,ymax)±ßÑØ£¬²»È»»áËÀÑ­»·
+*/
+vector<int> NumberExtract::findPoint(int xx,int yy,vector<bool>& isVisited)
+{
+    int xmin = xx,ymin = yy;
+    int xmax = xx,ymax = yy;
+    bool foundPoint = true;
+    bool findUp = true,findLeft = true,findRight = true,findDown = true;
+    while(foundPoint)
+    {
+        foundPoint = false;
+        int xl = xmin - 3 < 0 ? 0 : xmin-3;
+        int xr = xmax + 3 >= bipaper.width() ? bipaper.width()-1 : xmax + 3;
+        int yl = ymin - 3 < 0 ? 0 : ymin-3;
+        int yr = ymax + 3 >= bipaper.height() ? bipaper.height()-1 : ymax + 3;
+        //ÉÏÒ»ÇøÓò²éÑ¯
+        if(findUp)
+        {
+            //findUp = false;
+            for(int x = xl;x<=xr;x++)
+            {
+                for(int y = yl;y<ymin;y++)
+                {
+                    if(bipaper(x,y)==0)
+                    {
+                        updatePoint(xmin,xmax,ymin,ymax,x,y);
+                        foundPoint = true;
+                        findUp = true;
+                    }
+
+                }
+            }
+        }
+
+        if(findLeft)
+        {
+            //findLeft = false;
+            for(int x = xl;x<xmin;x++)
+            {
+                for(int y = ymin;y<=ymax;y++)
+                {
+                    if(bipaper(x,y)==0)
+                    {
+                        updatePoint(xmin,xmax,ymin,ymax,x,y);
+                        foundPoint = true;
+                        findLeft = true;
+                    }
+                }
+            }
+        }
+
+        if(findRight)
+        {
+            //findRight = false;
+            for(int x = xmax +1;x<=xr;x++)
+            {
+                for(int y = ymin;y<=ymax;y++)
+                {
+                    if(bipaper(x,y)==0)
+                    {
+                        updatePoint(xmin,xmax,ymin,ymax,x,y);
+                        foundPoint = true;
+                        findRight = true;
+                    }
+                }
+            }
+        }
+
+        if(findDown)
+        {
+            //findDown = false;
+            for(int x = xl;x<=xr;x++)
+            {
+                for(int y = ymax +1;y<=yr;y++)
+                {
+                    if(bipaper(x,y)==0)
+                    {
+                        updatePoint(xmin,xmax,ymin,ymax,x,y);
+                        foundPoint = true;
+                        findDown = true;
+                    }
+                }
+            }
+        }
+
+    }
+    for(int i = xmin;i<=xmax;i++)
+    {
+        isVisited[i] = true;
+    }
+    vector<int> ans{xmin,ymin,xmax,ymax};
+    return ans;
 }
 
 void NumberExtract::getBinaryImg()
@@ -232,10 +512,6 @@ vector<int> NumberExtract::getVerticallines()
         }
         if(repeat)
         {
-#ifdef DEBUG
-cout<<"´æÔÚÖØ¸´"<<endl;
-cout<<ranking[repeatNum].first/num[repeatNum]<<"Óë"<<ranking[counting].first<<"ÖØ¸´"<<endl;
-#endif // DEBUG
             num[repeatNum]++;
             ranking[repeatNum].first += ranking[counting].first;
             for(auto iter = ranking.begin();iter!=ranking.end();iter++)
@@ -249,9 +525,6 @@ cout<<ranking[repeatNum].first/num[repeatNum]<<"Óë"<<ranking[counting].first<<"Ö
         }
         else
         {
-#ifdef DEBUG
-cout<<ranking[counting].first<<"Ã»ÓĞÖØ¸´"<<endl;
-#endif // DEBUG
             num.push_back(1);
             counting++;
 
