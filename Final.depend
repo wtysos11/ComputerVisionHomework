@@ -105,15 +105,18 @@
 	<algorithm>
 	<iostream>
 
-1546057057 e:\code\computervision\homeworkfinal\a4correct.h
+1546153293 e:\code\computervision\homeworkfinal\a4correct.h
 	"Hough.h"
 	"CImg.h"
 
-1546101078 e:\code\computervision\homeworkfinal\numberextract.h
+1546158305 e:\code\computervision\homeworkfinal\numberextract.h
 	"CImg.h"
 	<vector>
 	<iostream>
+	<utility>
+	<string>
 
-1546092530 source:e:\code\computervision\homeworkfinal\numberextract.cpp
+1546158403 source:e:\code\computervision\homeworkfinal\numberextract.cpp
 	"NumberExtract.h"
+	<cmath>
 

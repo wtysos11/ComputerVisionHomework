@@ -1,5 +1,120 @@
 #include "NumberExtract.h"
 #include <cmath>
+//仿射变换矩阵求解
+vector<double> my_affine_fit(vector<vector<double>> from,vector<vector<double>> to)
+{
+    int dim = from[0].size();
+    //create dim * dim+1 matrix, fill it
+    vector<vector<double>> c(dim);
+
+    for(int j = 0;j<dim;j++)
+    {
+        c[j] = vector<double>(dim+1,0);
+        for(int k = 0;k<dim+1;k++)
+        {
+            for(int i = 0;i<from.size();i++)
+            {
+                vector<double> qi(from[i]);
+                qi.push_back(1);
+
+                c[j][k] += qi[k]*to[i][j];
+
+            }
+        }
+    }
+
+
+    vector<vector<double>> Q;
+    for(int i = 0;i<dim+1;i++)
+    {
+        vector<double> qq(dim+1,0);
+        Q.push_back(qq);
+    }
+    for(int qi = 0;qi<from.size();qi++)
+    {
+        vector<double> qt(from[qi]);
+        qt.push_back(1);
+        for(int i = 0;i<dim+1;i++)
+        {
+            for(int j = 0;j<dim+1;j++)
+            {
+                Q[i][j] += qt[i]*qt[j];
+            }
+        }
+    }
+
+
+    vector<vector<double>> m(dim+1);
+    for(int i = 0;i<dim+1;i++)
+    {
+        m[i]=vector<double>(2*dim+1,0);
+        for(int j = 0;j<2*dim+1;j++)
+        {
+            if(j<dim+1)
+            {
+                m[i][j] = Q[i][j];
+            }
+            else
+            {
+                m[i][j] = c[j-dim-1][i];
+            }
+        }
+
+    }
+
+    double eps = 1.0/pow(10,10);
+    int h = m.size(),w = m[0].size();
+    for(int y = 0 ;y<h;y++)
+    {
+        int maxrow = y;
+        for(int y2=y+1;y2<h;y2++)
+        {
+            if(fabs(m[y2][y])>fabs(m[maxrow][y]))
+                maxrow = y2;
+        }
+        swap(m[maxrow],m[y]);
+        if(fabs(m[y][y])<=eps)
+        {
+            return vector<double>();
+        }
+        for(int y2=y+1;y2<h;y2++)
+        {
+            double cc = m[y2][y]/m[y][y];
+            for(int x = y;x<w;x++)
+            {
+                m[y2][x] -= m[y][x] * cc;
+            }
+        }
+    }
+    for(int y = h-1;y>-1;y--)
+    {
+        double cc = m[y][y];
+        for(int y2 = 0;y2<y;y2++)
+        {
+            for(int x = w-1; x > y-1; x--)
+            {
+                m[y2][x] -= m[y][x] * m[y2][y]/cc;
+            }
+        }
+        m[y][y]/=cc;
+        for(int x = h;x<w;x++)
+        {
+            m[y][x]/=cc;
+        }
+    }
+
+    vector<double> ans;
+    for(int j = 0;j<dim;j++)
+    {
+        for(int i = 0;i<=dim;i++)
+        {
+            ans.push_back(m[i][j+dim+1]);
+        }
+    }
+    return ans;
+
+}
+
 /*************************************************************************
  最小二乘法拟合直线，y = a*x + b; n组数据; r-相关系数[-1,1],fabs(r)->1,说明x,y之间线性关系好，fabs(r)->0，x,y之间无线性关系，拟合无意义
  a = (n*C - B*D) / (n*A - B*B)
@@ -72,6 +187,8 @@ void NumberExtract::compute()
     getBinaryImg();
     //提取字符行
     vector<int> horiLines(getVerticallines());
+    anspaper = CImg<int>(a4paper.width(),a4paper.height(),1,1,0);
+    cachepaper = CImg<int>(a4paper.width(),a4paper.height(),1,1,0);
     #ifdef DEBUG
     cout<<"vertical lines"<<endl;
     for(int i = 0;i<VERTICAL_NUM;i++)
@@ -240,16 +357,110 @@ void NumberExtract::compute()
                 }
             }
 
+        }//end 最小二乘法反代
+        //以每个数字的最小的x坐标进行排序
+        sort(numbers.begin(),numbers.end(),[](const vector<int>& v1,const vector<int>& v2)
+             {
+                 return v1[0]<v2[0];
+             });
+        /*对每一个得到的点进行处理，按扁，投射到28*28矩阵上，然后转换成784维向量进行存储*/
+        for(int num_index = 0;num_index<numbers.size();num_index++)
+        {
+            int xmin = numbers[num_index][0],ymin =  numbers[num_index][1];
+            int xmax = numbers[num_index][2],ymax =  numbers[num_index][3];
+            int deltaX = xmax - xmin;
+            int deltaY = ymax - ymin;
+            /*水平方向膨胀*/
+            ymin -= deltaY/7;
+            ymax += deltaY/7;
+            //考虑到数字一般是垂直方向拉长的，因此对于过长的数字，比如1，予以水平方向空白填充
+            if((double)deltaX/deltaY < 0.75)
+            {
+                int acX = round(deltaY * 0.75);
+                int centerX = (xmin+xmax)/2;
+                xmin = centerX - acX/2;
+                xmax = centerX + (acX-acX/2);
+            }
+            xmin -= deltaX/7;
+            xmax += deltaX/7;
+            //投影到28*28空间上
+            int digitSize = 28;
+
+            vector<vector<double>> from,to;
+            to.push_back(vector<double>{xmin,ymin});
+            to.push_back(vector<double>{xmax,ymin});
+            to.push_back(vector<double>{xmax,ymax});
+            to.push_back(vector<double>{xmin,ymax});
+
+            from.push_back(vector<double>{0,0});
+            from.push_back(vector<double>{digitSize,0});
+            from.push_back(vector<double>{digitSize,digitSize});
+            from.push_back(vector<double>{0,digitSize});
+            vector<double> parameter(my_affine_fit(from,to));
+            /*
+            对原始图像进行预处理
+            首先从A4图像拿到原始区间数据
+                    使用二值化图像的结果区分前景和背景
+                    前景使用255减去前景值，背景全部为0，值保留在bipaper中
+                形态学膨胀，区间内取八邻域的最小值
+
+                问题：执行顺序是按照数字来的，如果两个数字之间的区域有重叠，会使前景色和背景色倒置。
+            */
+            for(int dgx = xmin;dgx<=xmax;dgx++)
+            {
+                for(int dgy = ymin;dgy<=ymax;dgy++)
+                {
+                    //是边缘点
+                    if(bipaper(dgx,dgy)==0)
+                    {
+                        cachepaper(dgx,dgy) = 255 - a4paper(dgx,dgy);
+                    }
+                    else
+                    {
+                        cachepaper(dgx,dgy) = 0;
+                    }
+                }
+            }
+
+            for(int dgx = xmin;dgx<=xmax;dgx++)
+            {
+                for(int dgy = ymin;dgy<=ymax;dgy++)
+                {
+                    int xl = dgx-1<xmin?xmin:dgx-1;
+                    int xr = dgx+1>xmax?xmax:dgx+1;
+                    int yl = dgy-1<ymin?ymin:dgy-1;
+                    int yr = dgy+1>ymax?ymax:dgy+1;
+
+                    int maxNum = cachepaper(dgx,dgy);
+                    for(int px = xl;px<=xr;px++)
+                    {
+                        for(int py = yl;py<=yr;py++)
+                        {
+                            if(cachepaper(px,py)>maxNum)
+                            {
+                                maxNum = cachepaper(px,py);
+                            }
+                        }
+                    }
+                    anspaper(dgx,dgy) = maxNum;
+                }
+            }
+
+            CImg<int> digit(digitSize,digitSize,1,1,0);
+            cimg_forXY(digit,dgx,dgy)
+            {
+                int aimX = (double)parameter[0] * dgx + parameter[1] *dgy + parameter[2];
+                int aimY = (double)parameter[3] * dgx + parameter[4] *dgy + parameter[5];
+                digit(dgx,dgy) = anspaper(aimX,aimY);
+            }
+            string filename = "line"+to_string(i)+"_num_"+to_string(num_index)+".bmp";
+            digit.display();
         }
 
 
-
-        /*对每一个得到的点进行处理，按扁，投射到28*28矩阵上，然后转换成784维向量进行存储*/
-
-
-    }
+    }//end horizontalLines，每一条垂直线
 #ifdef DEBUG
-    bipaper.display();
+    anspaper.display();
 #endif
 }
 
@@ -293,8 +504,8 @@ vector<int> NumberExtract::findPoint(int xx,int yy,vector<bool>& isVisited)
         foundPoint = false;
         int xl = xmin - 3 < 0 ? 0 : xmin-3;
         int xr = xmax + 3 >= bipaper.width() ? bipaper.width()-1 : xmax + 3;
-        int yl = ymin - 3 < 0 ? 0 : ymin-3;
-        int yr = ymax + 3 >= bipaper.height() ? bipaper.height()-1 : ymax + 3;
+        int yl = ymin - 5 < 0 ? 0 : ymin-5;
+        int yr = ymax + 5 >= bipaper.height() ? bipaper.height()-1 : ymax + 5;
         //上一区域查询
         if(findUp)
         {

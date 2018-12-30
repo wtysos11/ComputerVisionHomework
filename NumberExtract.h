@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <utility>
+#include <string>
 #define DEBUG
 //二值化图像的分界点
 #define BITHRESHOLD 150
@@ -19,7 +20,7 @@ using namespace cimg_library;
 struct NumberExtract
 {
 public:
-    CImg<int> a4paper,bipaper;
+    CImg<int> a4paper,bipaper,anspaper,cachepaper;
     NumberExtract(CImg<int> a4)
     {
         a4paper = a4;
@@ -53,6 +54,8 @@ public:
     {
         a4paper.clear();
         bipaper.clear();
+        anspaper.clear();
+        cachepaper.clear();
     }
 };
 
