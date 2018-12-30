@@ -183,6 +183,8 @@ vector<double> LineFitLeastSquares(vector<int> data_x, vector<int> data_y)
 
 void NumberExtract::compute()
 {
+    //BPnet* bp = BPnet::GetInstance();
+    ofstream fout("imageOut");
     //处理，得到二值化图像
     getBinaryImg();
     //提取字符行
@@ -300,10 +302,6 @@ void NumberExtract::compute()
         //对这条直线上的点进行再次求值
         int uplimit = ver - st;
         int downlimit = ed - ver;
-        #ifdef DEBUG
-        cout<<"y="<<line_k<<"x+"<<line_b<<endl;
-        cout<<"New Point"<<endl;
-        #endif
         for(int x = MARGIN*bipaper.width();x<(1-MARGIN)*bipaper.width();x++)
         {
             up = 0,down = 0;
@@ -326,13 +324,6 @@ void NumberExtract::compute()
                     {
                         vector<int> coordinate(findPoint(x,currentVerticalCenter-up,isVisited));
                         numbers.push_back(coordinate);
-#ifdef DEBUG
-                        for(int j = 0;j<4;j++)
-                        {
-                            cout<<coordinate[j]<<"\t";
-                        }
-                        cout<<endl;
-#endif
                         break;
                     }
                     up++;
@@ -344,13 +335,6 @@ void NumberExtract::compute()
                     {
                         vector<int> coordinate(findPoint(x,currentVerticalCenter+down,isVisited));
                         numbers.push_back(coordinate);
-#ifdef DEBUG
-                        for(int j = 0;j<4;j++)
-                        {
-                            cout<<coordinate[j]<<"\t";
-                        }
-                        cout<<endl;
-#endif
                         break;
                     }
                     down++;
@@ -414,6 +398,7 @@ void NumberExtract::compute()
                     if(bipaper(dgx,dgy)==0)
                     {
                         cachepaper(dgx,dgy) = 255 - a4paper(dgx,dgy);
+                        //cachepaper(dgx,dgy) = 255;
                     }
                     else
                     {
@@ -432,6 +417,7 @@ void NumberExtract::compute()
                     int yr = dgy+1>ymax?ymax:dgy+1;
 
                     int maxNum = cachepaper(dgx,dgy);
+                    /*
                     for(int px = xl;px<=xr;px++)
                     {
                         for(int py = yl;py<=yr;py++)
@@ -442,26 +428,56 @@ void NumberExtract::compute()
                             }
                         }
                     }
+                    */
                     anspaper(dgx,dgy) = maxNum;
                 }
             }
 
             CImg<int> digit(digitSize,digitSize,1,1,0);
+            vector<int> digitData;
             cimg_forXY(digit,dgx,dgy)
             {
                 int aimX = (double)parameter[0] * dgx + parameter[1] *dgy + parameter[2];
                 int aimY = (double)parameter[3] * dgx + parameter[4] *dgy + parameter[5];
-                digit(dgx,dgy) = anspaper(aimX,aimY);
-            }
-            string filename = "line"+to_string(i)+"_num_"+to_string(num_index)+".bmp";
-            digit.display();
-        }
 
+                if(anspaper(aimX,aimY)>0)
+                {
+                    digit(dgx,dgy) = digit(dgx,dgy) + 50 > 255 ? 255 : digit(dgx,dgy) + 50;
+                }
+                else
+                {
+                    int maximum = 0;
+                    for(int xx = aimX - 1;xx<=aimX+1;xx++)
+                    {
+                        for(int yy = aimY - 1;yy<=aimY+1;yy++)
+                        {
+                            if(maximum < anspaper(xx,yy))
+                            {
+                                maximum = anspaper(xx,yy);
+                            }
+                        }
+                    }
+                    digit(dgx,dgy) = maximum;
+                }
+                digitData.push_back(digit(dgx,dgy));
+                fout<<digit(dgx,dgy)<<" ";
+            }
+            fout<<endl;
+#ifdef OUTPUT
+            string filename = "line"+to_string(i)+"_num_"+to_string(num_index)+".bmp";
+            digit.save(filename.c_str());
+#endif
+            //int preNumber = bp->predictNum(digitData);
+            //cout<<preNumber<<" ";
+            digit.clear();
+        }
+        cout<<endl;
 
     }//end horizontalLines，每一条垂直线
 #ifdef DEBUG
     anspaper.display();
 #endif
+    fout.close();
 }
 
 //25邻域找点，找到的点的左上角的x和y坐标和右下角的x和y坐标返回

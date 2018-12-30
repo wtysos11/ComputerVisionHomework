@@ -6,7 +6,10 @@
 #include <iostream>
 #include <utility>
 #include <string>
+#include <fstream>
+#include "BPnet.h"
 #define DEBUG
+#define OUTPUT
 //二值化图像的分界点
 #define BITHRESHOLD 150
 //垂直灰度直方图的顶点阈值
