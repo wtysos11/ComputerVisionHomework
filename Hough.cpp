@@ -85,10 +85,13 @@ vector<Vertex> Hough::find4InterchangePoints()
         if(ranking.size()<KP)
         {
             double ra = (double)angle*PI/180.0;//real angle
-            if(sin(ra)==0)
-                ra = 0.01;
             double m = -cos(ra)/sin(ra);
             double b = (double) polar/sin(ra);
+            if(sin(ra) - 0 < 1e-6)
+            {
+                m = 0;
+                b = (double) polar / cos(ra);
+            }
 
             ranking.push_back(hough_space(angle,polar));
             topkpoints.push_back(make_pair(m,b));
@@ -97,11 +100,13 @@ vector<Vertex> Hough::find4InterchangePoints()
         else if(hough_space(angle,polar)>ranking[KP-1])
         {
             double ra = (double)angle*PI/180.0;//real angle
-            if(sin(ra)==0)
-                ra = 0.01;
             double m = -cos(ra)/sin(ra);
             double b = (double) polar/sin(ra);
-
+            if(sin(ra) - 0 < 1e-6)
+            {
+                m = 0;
+                b = (double) polar / cos(ra);
+            }
             ranking[KP-1] = hough_space(angle,polar);
             topkpoints[KP-1] = make_pair(m,b);
             maintainArray(ranking,topkpoints);
@@ -126,9 +131,28 @@ vector<Vertex> Hough::find4InterchangePoints()
             double m2 = topkpoints[j].first;
             double b2 = topkpoints[j].second;
 
-            double deltaX = (b2-b1)/(m1-m2);
-            int xx = round(deltaX);
-            int yy = round(m1*deltaX+b1);
+            int xx,yy;
+            if(m1!=0 && m2!=0)
+            {
+                double deltaX = (b2-b1)/(m1-m2);
+                xx = round(deltaX);
+                yy = round(m1*deltaX+b1);
+            }
+            else if(m1 == 0 && m2 == 0)
+            {
+                continue;
+            }
+            else if(m1 == 0)
+            {
+                xx = round(b1);
+                yy = round(m2*b1+b2);
+            }
+            else if(m2 == 0)
+            {
+                xx = round(b2);
+                yy = round(m1*b2+b1);
+            }
+
 
             //check if old points are close to this.
             bool foundVertex = false;
@@ -159,43 +183,31 @@ vector<Vertex> Hough::find4InterchangePoints()
 //find 4 points in correct order.
 vector<Vertex> Hough::getA4Points(vector<Vertex>& vertexs)
 {
+    #ifdef DEBUG
+    cout<<"top4 point"<<endl;
+    for(int i = 0;i<vertexs.size();i++)
+    {
+        cout<<vertexs[i].x<<" "<<vertexs[i].y<<" "<<vertexs[i].weight<<endl;
+    }
+    #endif // DEBUG
     vector<Vertex> topv;
-    for(int i = 0;i<4;i++)
+    int counting = 0;
+    int i = 0;
+    while(counting<4 && i<vertexs.size())
     {
-        topv.push_back(vertexs[i]);
-    }
-/*
-首先确定第一个点和最后一个点
-方法：
-    从第一个点分别向其他三个点引直线
-    显然，如果剩余两个点在线的同侧，则这条线是合适的。反之则是不合适的。
-    这样就拿到了两组对角点
-*/
-    int oppoPoint=0;
-    for(int i = 1;i<3;i++)
-    {
-        int status = 0;
-        //过两点的直线
-        double linek = (double) (topv[i].y - topv[0].y)/(topv[i].x-topv[0].x);
-        double lineb = (double) topv[i].y - linek*topv[i].x;
-        for(int j = 1;j<3;j++)
+        if(vertexs[i].x>0 && vertexs[i].x < edge.width() && vertexs[i].y > 0 && vertexs[i].y < edge.height())
         {
-            if(i==j)
-                continue;
-
-            double deltaY = topv[i].y - (linek * topv[i].x + lineb);
-            if(status == 0)
-            {
-                status = deltaY>0?1:-1;
-            }
-            else if(status==1 && deltaY<0||status==-1 && deltaY>0)
-            {
-                oppoPoint = i;
-            }
+            topv.push_back(vertexs[i]);
+            counting++;
         }
-        if(oppoPoint!=0)
-            break;
+        i++;
     }
+    if(counting<4 && i==vertexs.size())
+    {
+        cout<<"error! not enough valuable point!"<<endl;
+        return topv;
+    }
+
 /*
 下面矫正A4纸节点的顺序
 1. 判断A4纸是正放的还是斜放的。如果A4纸是正放的，则高度为1:2:1，不然是2:2
@@ -219,7 +231,57 @@ vector<Vertex> Hough::getA4Points(vector<Vertex>& vertexs)
         {
             swap(topv[0],topv[1]);
         }
+         /*
+        首先确定第一个点和最后一个点
+        方法：
+            从第一个点分别向其他三个点引直线
+            显然，如果剩余两个点在线的同侧，则这条线是合适的。反之则是不合适的。
+            这样就拿到了两组对角点
+        */
+        //找0点的对点
+        int oppoPoint=0;
+        double delta;
+        for(int i = 1;i<=3;i++)
+        {
+            int status = 0;
+            //过两点的直线
+            if(topv[i].x!=topv[0].x)
+            {
+                double linek = (double) (topv[i].y - topv[0].y)/(topv[i].x-topv[0].x);
+                double lineb = (double) topv[i].y - linek*topv[i].x;
+                for(int j = 1;j<=3;j++)
+                {
+                    if(i==j)
+                        continue;
+                    int y = topv[j].y;
+                    int x = topv[j].x;
+                    delta =(double)linek * x + lineb;
+                    if(status == 0)
+                    {
+                        if(y>delta)
+                        {
+                            status = 1;
+                        }
+                        else if(y<delta)
+                        {
+                            status = -1;
+                        }
+                    }
+                    else if(status==1 && y<delta ||status==-1 && y > delta)
+                    {
+                        oppoPoint = i;
+                    }
+                }
+            }
+            else
+            {
+                //两点位于同一条直线上，肯定不是对点
+                continue;
+            }
 
+            if(oppoPoint!=0)
+                break;
+        }
         if(oppoPoint != 2)
         {
             swap(topv[2],topv[3]);
@@ -228,19 +290,24 @@ vector<Vertex> Hough::getA4Points(vector<Vertex>& vertexs)
     else//A4纸是斜着放的
     {
         //以最高的为第一个点
+        //决定最上的短边，这两个点为0和1
         if(pow(topv[0].x-topv[1].x,2)+pow(topv[0].y-topv[1].y,2) > pow(topv[0].x-topv[2].x,2)+pow(topv[0].y-topv[2].y,2))//dist 0->1 > dist 0->2
         {
             swap(topv[1],topv[2]);
-            if(oppoPoint == 1)
-                oppoPoint = 2;
-            else if(oppoPoint == 2)
-                oppoPoint = 1;
         }
-        //按照距离来不行，应该按照朝向来
-        if(oppoPoint !=2)
+        //调整短边的顺序
+        if(topv[0].x>topv[1].x)
+        {
+            swap(topv[0],topv[1]);
+        }
+
+        if(topv[3].x>topv[2].x)
         {
             swap(topv[2],topv[3]);
         }
     }
+
+
+
     return topv;
 }

@@ -32,6 +32,8 @@
 			<Add option="-Wall" />
 		</Compiler>
 		<Unit filename="A4Correct.h" />
+		<Unit filename="BPnet.cpp" />
+		<Unit filename="BPnet.h" />
 		<Unit filename="CImg.h" />
 		<Unit filename="Canny.cpp" />
 		<Unit filename="Canny.h" />

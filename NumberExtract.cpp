@@ -1,5 +1,39 @@
 #include "NumberExtract.h"
 #include <cmath>
+#include <queue>
+#include <map>
+using namespace std;
+#define EDGE 255
+#define NOEDGE 0
+
+// XY方向的正扩张
+int dilateXY(const CImg<int>& img, int x, int y)
+{
+	if (img(x, y) == NOEDGE)
+    {
+        int maximum = 0;
+		for(int i = -1;i<=1;i++)
+        {
+            for(int j = -1;j<=1;j++)
+            {
+                if(x+i>=0 && y+j >= 0 && x+i < img.width() && y+j < img.width())
+                {
+                    if(img(x+i,y+j) != NOEDGE && img(x+i,y+j) > maximum)
+                    {
+                        maximum = img(x+i,y+j);
+                    }
+                }
+            }
+        }
+        return maximum;
+	}
+	else
+        return EDGE;
+
+}
+
+
+
 //仿射变换矩阵求解
 vector<double> my_affine_fit(vector<vector<double>> from,vector<vector<double>> to)
 {
@@ -187,9 +221,89 @@ void NumberExtract::compute()
     ofstream fout("imageOut");
     //处理，得到二值化图像
     getBinaryImg();
+    /*
+    矫正因为A4纸问题引起的Margin干扰
+    */
+    /*
+    从极度边缘开始重新生长
+    */
+    //上边缘重构
+    queue<pair<int,int>> marginQueue;
+    map<pair<int,int>,bool> inQueue;
+    for(int x = 1;x<=1;x++)
+    {
+        for(int y = 1;y<bipaper.height();y++)
+        {
+            int data = bipaper(x,y);
+            if(bipaper(x,y) == EDGE )
+            {
+                marginQueue.push(make_pair(x,y));
+                inQueue[make_pair(x,y)] = true;
+            }
+            data = bipaper(bipaper.width()-1-x,y);
+            if(bipaper(bipaper.width()-1-x,y) == EDGE)
+            {
+                marginQueue.push(make_pair(bipaper.width()-1-x,y));
+                inQueue[make_pair(bipaper.width()-1-x,y)] = true;
+            }
+        }
+    }
+    for(int y =1;y<=1;y++)
+    {
+        for(int x = 1;x<bipaper.width();x++)
+        {
+            int data = bipaper(x,y);
+            if(bipaper(x,y) == EDGE && inQueue.find(make_pair(x,y)) == inQueue.end())
+            {
+                marginQueue.push(make_pair(x,y));
+                inQueue[make_pair(x,y)] = true;
+            }
+            data = bipaper(x,bipaper.height()-1-y);
+            if(bipaper(x,bipaper.height()-1-y) == EDGE && inQueue.find(make_pair(x,bipaper.height()-1-y)) == inQueue.end())
+            {
+                marginQueue.push(make_pair(x,bipaper.height()-1-y));
+                inQueue[make_pair(x,bipaper.height()-1-y)] = true;
+            }
+        }
+    }
+    while(!marginQueue.empty())
+    {
+        pair<int,int> p = marginQueue.front(); marginQueue.pop();
+        if(bipaper(p.first,p.second) == EDGE)
+        {
+            bipaper(p.first,p.second) = NOEDGE;
+            for(int i = -1;i<=1;i++)
+            {
+                if(p.first+i>=0 && p.first+i<bipaper.width())
+                {
+                    if(bipaper(p.first+i,p.second) == EDGE && inQueue.find(make_pair(p.first+i,p.second)) == inQueue.end())
+                    {
+                        marginQueue.push(make_pair(p.first+i,p.second));
+                        inQueue[make_pair(p.first+i,p.second)] = true;
+                    }
+                }
+            }
+            for(int j = -1;j<=1;j++)
+            {
+                if(p.second+j>=0 && p.second+j<bipaper.height())
+                {
+                    if(bipaper(p.first,p.second+j) == EDGE && inQueue.find(make_pair(p.first,p.second+j)) == inQueue.end())
+                    {
+                        marginQueue.push(make_pair(p.first,p.second+j));
+                        inQueue[make_pair(p.first,p.second+j)] = true;
+                    }
+                }
+            }
+        }
+    }
+    bipaper.display();
+    xlMargin = 0;
+    xrMargin = bipaper.width();
+    cout<<"update margin x:"<<xlMargin<<"\t"<<xrMargin<<endl;
+    cout<<"update margin y:"<<yuMargin<<"\t"<<ydMargin<<endl;
+
     //提取字符行
     vector<int> horiLines(getVerticallines());
-    anspaper = CImg<int>(a4paper.width(),a4paper.height(),1,1,0);
     cachepaper = CImg<int>(a4paper.width(),a4paper.height(),1,1,0);
     #ifdef DEBUG
     cout<<"vertical lines"<<endl;
@@ -238,7 +352,7 @@ void NumberExtract::compute()
         cout<<"lines"<<i<<" with vertical lines:"<<horiLines[i]<<"\tst:"<<st<<"\ted:"<<ed<<endl;
         vector<int> data_x;//第一次计算算出的中心点的x坐标
         vector<int> data_y;//第一次计算算出的中心点的y坐标
-        for(int x = MARGIN*bipaper.width();x<(1-MARGIN)*bipaper.width();x++)
+        for(int x = xlMargin;x<xrMargin;x++)
         {
             up = 0,down = 0;
             if(isVisited[x])
@@ -251,18 +365,23 @@ void NumberExtract::compute()
                 if(ver-up>st)
                 {
                     //25邻域找点
-                    if(bipaper(x,ver-up)==0)
+                    if(bipaper(x,ver-up)==EDGE)
                     {
                         vector<int> coordinate(findPoint(x,ver-up,isVisited));
-                        numbers.push_back(coordinate);
-                        data_x.push_back((coordinate[0]+coordinate[2])/2);
-                        data_y.push_back((coordinate[1]+coordinate[3])/2);
+                        if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>100)
+                        {
+                            numbers.push_back(coordinate);
+                            data_x.push_back((coordinate[0]+coordinate[2])/2);
+                            data_y.push_back((coordinate[1]+coordinate[3])/2);
+                        }
 
+#ifdef DEBUG
                         for(int j = 0;j<4;j++)
                         {
                             cout<<coordinate[j]<<"\t";
                         }
                         cout<<endl;
+#endif
                         break;
                     }
                     up++;
@@ -270,17 +389,22 @@ void NumberExtract::compute()
                 //try to find point down
                 if(ver+down<ed)
                 {
-                    if(bipaper(x,ver+down)==0)
+                    if(bipaper(x,ver+down)==EDGE)
                     {
                         vector<int> coordinate(findPoint(x,ver+down,isVisited));
-                        numbers.push_back(coordinate);
-                        data_x.push_back((coordinate[0]+coordinate[2])/2);
-                        data_y.push_back((coordinate[1]+coordinate[3])/2);
+                        if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>100)
+                        {
+                            numbers.push_back(coordinate);
+                            data_x.push_back((coordinate[0]+coordinate[2])/2);
+                            data_y.push_back((coordinate[1]+coordinate[3])/2);
+                        }
+#ifdef DEBUG
                         for(int j = 0;j<4;j++)
                         {
                             cout<<coordinate[j]<<"\t";
                         }
                         cout<<endl;
+#endif
                         break;
                     }
                     down++;
@@ -298,11 +422,13 @@ void NumberExtract::compute()
         vector<double> para(LineFitLeastSquares(data_x,data_y));
         double line_k = para[0];
         double line_b = para[1];
-
+#ifdef DEBUG
+cout<<"New Vertex"<<endl;
+#endif // DEBUG
         //对这条直线上的点进行再次求值
         int uplimit = ver - st;
         int downlimit = ed - ver;
-        for(int x = MARGIN*bipaper.width();x<(1-MARGIN)*bipaper.width();x++)
+        for(int x = xlMargin;x<xrMargin;x++)
         {
             up = 0,down = 0;
             if(isVisited[x])
@@ -310,7 +436,7 @@ void NumberExtract::compute()
                 continue;
             }
             int currentVerticalCenter = round(line_k*x+line_b);
-            if(currentVerticalCenter<MARGIN*bipaper.height() || currentVerticalCenter > (1-MARGIN) * bipaper.height())
+            if(currentVerticalCenter<yuMargin || currentVerticalCenter >ydMargin)
                 continue;
 
             while(up<uplimit || down<downlimit)
@@ -320,10 +446,18 @@ void NumberExtract::compute()
                 if(up<uplimit)
                 {
                     //25邻域找点
-                    if(bipaper(x,currentVerticalCenter-up)==0)
+                    if(bipaper(x,currentVerticalCenter-up)==EDGE)
                     {
                         vector<int> coordinate(findPoint(x,currentVerticalCenter-up,isVisited));
-                        numbers.push_back(coordinate);
+                        if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>100)
+                            numbers.push_back(coordinate);
+#ifdef DEBUG
+                        for(int j = 0;j<4;j++)
+                        {
+                            cout<<coordinate[j]<<"\t";
+                        }
+                        cout<<endl;
+#endif
                         break;
                     }
                     up++;
@@ -331,10 +465,18 @@ void NumberExtract::compute()
                 //try to find point down
                 if(down<downlimit)
                 {
-                    if(bipaper(x,currentVerticalCenter+down)==0)
+                    if(bipaper(x,currentVerticalCenter+down)==EDGE)
                     {
                         vector<int> coordinate(findPoint(x,currentVerticalCenter+down,isVisited));
-                        numbers.push_back(coordinate);
+                        if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>100)
+                            numbers.push_back(coordinate);
+#ifdef DEBUG
+                        for(int j = 0;j<4;j++)
+                        {
+                            cout<<coordinate[j]<<"\t";
+                        }
+                        cout<<endl;
+#endif
                         break;
                     }
                     down++;
@@ -342,126 +484,93 @@ void NumberExtract::compute()
             }
 
         }//end 最小二乘法反代
+
+
         //以每个数字的最小的x坐标进行排序
         sort(numbers.begin(),numbers.end(),[](const vector<int>& v1,const vector<int>& v2)
              {
                  return v1[0]<v2[0];
              });
         /*对每一个得到的点进行处理，按扁，投射到28*28矩阵上，然后转换成784维向量进行存储*/
+        /*
+        处理的新想法：
+            1.首先制作一个正方向的盒子，盒子为数字长宽的最大值+5
+            2.将数字投射到盒子中间
+            3. 对数字膨胀两次后进行腐蚀
+        */
+#ifdef DEBUG
+    cout<<"check array numbers : "<<numbers.size()<<endl;
+    for(int num_index = 0;num_index<numbers.size();num_index++)
+    {
+        for(int j = 0;j<4;j++)
+            cout<<numbers[num_index][j]<<"\t";
+        cout<<endl;
+    }
+#endif
         for(int num_index = 0;num_index<numbers.size();num_index++)
         {
             int xmin = numbers[num_index][0],ymin =  numbers[num_index][1];
             int xmax = numbers[num_index][2],ymax =  numbers[num_index][3];
-            int deltaX = xmax - xmin;
-            int deltaY = ymax - ymin;
-            /*水平方向膨胀*/
-            ymin -= deltaY/7;
-            ymax += deltaY/7;
-            //考虑到数字一般是垂直方向拉长的，因此对于过长的数字，比如1，予以水平方向空白填充
-            if((double)deltaX/deltaY < 0.75)
-            {
-                int acX = round(deltaY * 0.75);
-                int centerX = (xmin+xmax)/2;
-                xmin = centerX - acX/2;
-                xmax = centerX + (acX-acX/2);
-            }
-            xmin -= deltaX/7;
-            xmax += deltaX/7;
-            //投影到28*28空间上
+            int width = xmax - xmin;
+            int height = ymax - ymin;
+
             int digitSize = 28;
+            int imgSize = width<height ? height + 6 : width + 6;
+            CImg<int> digit(imgSize,imgSize,1,1,0);
+            CImg<int> origindigit(imgSize,imgSize,1,1,0);
 
-            vector<vector<double>> from,to;
-            to.push_back(vector<double>{xmin,ymin});
-            to.push_back(vector<double>{xmax,ymin});
-            to.push_back(vector<double>{xmax,ymax});
-            to.push_back(vector<double>{xmin,ymax});
+            int p_x = (imgSize - width)/2;
+            int p_y = (imgSize - height)/2;
 
-            from.push_back(vector<double>{0,0});
-            from.push_back(vector<double>{digitSize,0});
-            from.push_back(vector<double>{digitSize,digitSize});
-            from.push_back(vector<double>{0,digitSize});
-            vector<double> parameter(my_affine_fit(from,to));
+            vector<int> digitData;
+            //从A4纸拿去原数据
+            for(int originX = xmin;originX<=xmax;originX++)
+            {
+                for(int originY = ymin;originY<=ymax;originY++)
+                {
+                    //in the digit image digit(xx,yy)
+                    int xx = originX-xmin+p_x;
+                    int yy = originY-ymin+p_y;
+                    origindigit(xx,yy) = a4paper(originX,originY);
+                    digit(xx,yy) = bipaper(originX,originY);
+                }
+            }
             /*
-            对原始图像进行预处理
-            首先从A4图像拿到原始区间数据
-                    使用二值化图像的结果区分前景和背景
-                    前景使用255减去前景值，背景全部为0，值保留在bipaper中
-                形态学膨胀，区间内取八邻域的最小值
-
-                问题：执行顺序是按照数字来的，如果两个数字之间的区域有重叠，会使前景色和背景色倒置。
+            再次进行二值化，背景为0，前景为255-原始值
             */
-            for(int dgx = xmin;dgx<=xmax;dgx++)
+            cimg_forXY(digit,xx,yy)
             {
-                for(int dgy = ymin;dgy<=ymax;dgy++)
+                if(digit(xx,yy)==EDGE)
                 {
-                    //是边缘点
-                    if(bipaper(dgx,dgy)==0)
-                    {
-                        cachepaper(dgx,dgy) = 255 - a4paper(dgx,dgy);
-                        //cachepaper(dgx,dgy) = 255;
-                    }
-                    else
-                    {
-                        cachepaper(dgx,dgy) = 0;
-                    }
-                }
-            }
-
-            for(int dgx = xmin;dgx<=xmax;dgx++)
-            {
-                for(int dgy = ymin;dgy<=ymax;dgy++)
-                {
-                    int xl = dgx-1<xmin?xmin:dgx-1;
-                    int xr = dgx+1>xmax?xmax:dgx+1;
-                    int yl = dgy-1<ymin?ymin:dgy-1;
-                    int yr = dgy+1>ymax?ymax:dgy+1;
-
-                    int maxNum = cachepaper(dgx,dgy);
-                    /*
-                    for(int px = xl;px<=xr;px++)
-                    {
-                        for(int py = yl;py<=yr;py++)
-                        {
-                            if(cachepaper(px,py)>maxNum)
-                            {
-                                maxNum = cachepaper(px,py);
-                            }
-                        }
-                    }
-                    */
-                    anspaper(dgx,dgy) = maxNum;
-                }
-            }
-
-            CImg<int> digit(digitSize,digitSize,1,1,0);
-            vector<double> digitData;
-            cimg_forXY(digit,dgx,dgy)
-            {
-                int aimX = (double)parameter[0] * dgx + parameter[1] *dgy + parameter[2];
-                int aimY = (double)parameter[3] * dgx + parameter[4] *dgy + parameter[5];
-
-                if(anspaper(aimX,aimY)>0)
-                {
-                    digit(dgx,dgy) = anspaper(aimX,aimY) + 100 > 255 ? 255 : anspaper(aimX,aimY) + 100;
+                    digit(xx,yy) = 255 - origindigit(xx,yy);
+                    digit(xx,yy) = digit(xx,yy) + 70 > 255 ? 255 : digit(xx,yy) + 70;
                 }
                 else
                 {
-                    int maximum = 0;
-                    for(int xx = aimX - 1;xx<=aimX+1;xx++)
-                    {
-                        for(int yy = aimY - 1;yy<=aimY+1;yy++)
-                        {
-                            if(maximum < anspaper(xx,yy))
-                            {
-                                maximum = anspaper(xx,yy);
-                            }
-                        }
-                    }
-                    digit(dgx,dgy) = maximum;
+                    digit(xx,yy) = 0;
                 }
-                digitData.push_back(digit(dgx,dgy));
-                fout<<digit(dgx,dgy)<<" ";
             }
+            CImg<int> digitCache(digit);
+            cimg_forXY(digit,dx,dy)
+            {
+                digit(dx,dy) = dilateXY(digitCache,dx,dy);
+            }
+            //digit.display();
+            //从digit投射到28*28
+            CImg<int> acNum(digitSize,digitSize,1,1,0);
+            //这里没有写错，MNIST数据集的顺序就是这样子
+            for(int originY = 0;originY<digitSize;originY++)
+            {
+                for(int originX = 0;originX<digitSize;originX++)
+                {
+                    int aimX = round((double)originX*imgSize/digitSize);
+                    int aimY = round((double)originY*imgSize/digitSize);
+                    digitData.push_back(digit(aimX,aimY));
+                    acNum(originX,originY) = digit(aimX,aimY);
+                    fout<<digit(aimX,aimY)<<" ";
+                }
+            }
+            //acNum.display();
             fout<<endl;
 #ifdef OUTPUT
             string filename = "line"+to_string(i)+"_num_"+to_string(num_index)+".bmp";
@@ -475,7 +584,7 @@ void NumberExtract::compute()
 
     }//end horizontalLines，每一条垂直线
 #ifdef DEBUG
-    anspaper.display();
+    bipaper.display();
 #endif
     fout.close();
 }
@@ -530,7 +639,7 @@ vector<int> NumberExtract::findPoint(int xx,int yy,vector<bool>& isVisited)
             {
                 for(int y = yl;y<ymin;y++)
                 {
-                    if(bipaper(x,y)==0)
+                    if(bipaper(x,y)==EDGE)
                     {
                         updatePoint(xmin,xmax,ymin,ymax,x,y);
                         foundPoint = true;
@@ -548,7 +657,7 @@ vector<int> NumberExtract::findPoint(int xx,int yy,vector<bool>& isVisited)
             {
                 for(int y = ymin;y<=ymax;y++)
                 {
-                    if(bipaper(x,y)==0)
+                    if(bipaper(x,y)==EDGE)
                     {
                         updatePoint(xmin,xmax,ymin,ymax,x,y);
                         foundPoint = true;
@@ -565,7 +674,7 @@ vector<int> NumberExtract::findPoint(int xx,int yy,vector<bool>& isVisited)
             {
                 for(int y = ymin;y<=ymax;y++)
                 {
-                    if(bipaper(x,y)==0)
+                    if(bipaper(x,y)==EDGE)
                     {
                         updatePoint(xmin,xmax,ymin,ymax,x,y);
                         foundPoint = true;
@@ -582,7 +691,7 @@ vector<int> NumberExtract::findPoint(int xx,int yy,vector<bool>& isVisited)
             {
                 for(int y = ymax +1;y<=yr;y++)
                 {
-                    if(bipaper(x,y)==0)
+                    if(bipaper(x,y)==EDGE)
                     {
                         updatePoint(xmin,xmax,ymin,ymax,x,y);
                         foundPoint = true;
@@ -600,37 +709,73 @@ vector<int> NumberExtract::findPoint(int xx,int yy,vector<bool>& isVisited)
     vector<int> ans{xmin,ymin,xmax,ymax};
     return ans;
 }
-
+/*
+先对原图像进行切割
+再对每个范围进行统计，如果灰度最大值和最小值相差过小，则忽略
+    然后使用最大类间方差区分前景和背景上
+*/
 void NumberExtract::getBinaryImg()
 {
     bipaper = CImg<int>(a4paper.width(),a4paper.height(),1,1,0);
+    CImg<int> cache(bipaper);
+    for(int i = 1;i<=cache.width()-2;i++)
+    {
+        for(int j = 1;j<=cache.height()-2;j++)
+        {
+            double gx = a4paper(i+1,j) - a4paper(i-1,j);
+            double gy = a4paper(i,j+1) - a4paper(i,j-1);
+            double grad = pow(gx,2)+pow(gy,2);
+            #ifdef DEBUG
+            if(grad>900)
+                grad = 900;
+            #endif
+            cache(i,j) = grad;
+
+        }
+    }
+#ifdef DEBUG
+cache.display();
+#endif // DEBUG
     cimg_forXY(bipaper,x,y)
     {
-        if(a4paper(x,y)<BITHRESHOLD)
+        if(cache(x,y)>=900)
         {
-            bipaper(x,y) = 0;
+            bipaper(x,y) = EDGE;
         }
         else
         {
-            bipaper(x,y) = 255;
+            int xmin = x-1<0?0:x-1,xmax = x+1>=bipaper.width()?bipaper.width()-1:x+1;
+            int ymin = y-1<0?0:y-1,ymax = y+1>=bipaper.height()?bipaper.height()-1:y+1;
+            for(int xx = xmin;xx<=xmax;xx++)
+            {
+                for(int yy = ymin;yy<=ymax;yy++)
+                {
+                    if(cache(xx,yy)>=900 || a4paper(xx,yy)<BITHRESHOLD)
+                    {
+                        bipaper(xx,yy) = EDGE;
+                        continue;
+                    }
+                }
+            }
+            bipaper(x,y) = NOEDGE;
         }
     }
-
+    cache.clear();
 }
 vector<int> NumberExtract::computeVerticalGrayHist()
 {
-    vector<int> hist;
-    int st = (double)MARGIN*bipaper.width();
-    int ed = bipaper.width()-st;
-    cimg_forY(bipaper,y)
+    vector<int> hist(bipaper.height(),0);
+    int st = xlMargin;
+    int ed = xrMargin;
+    for(int y = yuMargin;y<ydMargin;y++)
     {
         int sum = 0;
         for(int x = st;x<ed;x++)
         {
-            if(bipaper(x,y)==0)
+            if(bipaper(x,y)==EDGE)
                 sum++;
         }
-        hist.push_back(sum);
+        hist[y] = sum;
     }
 
     return hist;
@@ -639,12 +784,12 @@ vector<int> NumberExtract::computeVerticalGrayHist()
 vector<int> NumberExtract::computeHorizontalGrayHist(int yl,int yh)
 {
     vector<int> hist;
-    for(int x = MARGIN*bipaper.width();x<(1-MARGIN)*bipaper.width();x++)
+    for(int x = xlMargin;x<xrMargin;x++)
     {
         int sum = 0;
         for(int y = yl;y<=yh;y++)
         {
-            if(bipaper(x,y)==0)
+            if(bipaper(x,y)==EDGE)
             {
                 sum++;
             }
@@ -666,8 +811,8 @@ vector<int> NumberExtract::getVerticallines()
     vector<pair<int,int>> cache;
 
     //边缘由于A4纸矫正算法的问题，可能会留下黑边
-    int st = (double)MARGIN*hist.size();
-    int ed = hist.size()-st;
+    int st = yuMargin;
+    int ed = ydMargin;
 
     int vertical_diff = 0;//两条中心线之间的距离如果小于vertical_diff，则进行合并
     int hist_begin,hist_end;

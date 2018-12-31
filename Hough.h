@@ -9,9 +9,9 @@
 
 using namespace cimg_library;
 using namespace std;
-#define KP 13 //K max point
+#define KP 15 //K max point
 #define VERTEXMAX 64//如果点的欧式距离的平方小于这个值，则视为一个点
-
+#define DEBUG
 #define HEIGHTDIFF 50
 #define PI 3.1415926
 typedef int eleType;//CImg element type

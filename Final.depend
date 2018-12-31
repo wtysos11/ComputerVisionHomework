@@ -66,7 +66,7 @@
 	"CImg.h"
 	<stdint.h>
 
-1546180232 source:e:\code\computervision\homeworkfinal\main.cpp
+1546270724 source:e:\code\computervision\homeworkfinal\main.cpp
 	"CImg.h"
 	"Canny.h"
 	"Process.h"
@@ -85,7 +85,7 @@
 	<iostream>
 	<math.h>
 
-1546173881 e:\code\computervision\homeworkfinal\solution.h
+1546270769 e:\code\computervision\homeworkfinal\solution.h
 	"CImg.h"
 	"Canny.h"
 	"Process.h"
@@ -95,14 +95,14 @@
 	<string>
 	<iostream>
 
-1546072064 e:\code\computervision\homeworkfinal\hough.h
+1546263615 e:\code\computervision\homeworkfinal\hough.h
 	"CImg.h"
 	<string>
 	<vector>
 	<utility>
 	<iostream>
 
-1546048841 source:e:\code\computervision\homeworkfinal\hough.cpp
+1546274519 source:e:\code\computervision\homeworkfinal\hough.cpp
 	"Hough.h"
 	<math.h>
 	<algorithm>
@@ -112,7 +112,7 @@
 	"Hough.h"
 	"CImg.h"
 
-1546175817 e:\code\computervision\homeworkfinal\numberextract.h
+1546268328 e:\code\computervision\homeworkfinal\numberextract.h
 	"CImg.h"
 	<vector>
 	<iostream>
@@ -121,9 +121,11 @@
 	<fstream>
 	"BPnet.h"
 
-1546174083 source:e:\code\computervision\homeworkfinal\numberextract.cpp
+1546270658 source:e:\code\computervision\homeworkfinal\numberextract.cpp
 	"NumberExtract.h"
 	<cmath>
+	<queue>
+	<map>
 
 1546180162 source:e:\code\computervision\homeworkfinal\bpnet.cpp
 	"BPnet.h"

@@ -41,7 +41,9 @@ struct Solution{
         {
             cout<<top4[i].x<<"\t"<<top4[i].y<<endl;
         }
+        cannyImage.display();
 #endif
+
         a4Image = transformToA4(source,downsampleImg.width(),downsampleImg.height(),top4);
         NumberExtract num(a4Image);
         num.compute();

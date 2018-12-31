@@ -11,7 +11,7 @@
 #define DEBUG
 #define OUTPUT
 //二值化图像的分界点
-#define BITHRESHOLD 150
+#define BITHRESHOLD 135
 //垂直灰度直方图的顶点阈值
 #define VERTICAL_GRAY_THRESHOLD 10
 #define MARGIN 0.05//A4提取误差边缘
@@ -27,7 +27,13 @@ public:
     NumberExtract(CImg<int> a4)
     {
         a4paper = a4;
+        xlMargin = MARGIN * a4paper.width();
+        xrMargin = a4paper.width() - xlMargin;
+        yuMargin = MARGIN * a4paper.height();
+        ydMargin = a4paper.height() - yuMargin;
     }
+    int xlMargin,xrMargin;
+    int yuMargin,ydMargin;
 
     /*
     计算入口：
