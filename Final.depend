@@ -66,7 +66,7 @@
 	"CImg.h"
 	<stdint.h>
 
-1546270724 source:e:\code\computervision\homeworkfinal\main.cpp
+1546307848 source:e:\code\computervision\homeworkfinal\main.cpp
 	"CImg.h"
 	"Canny.h"
 	"Process.h"
@@ -121,7 +121,7 @@
 	<fstream>
 	"BPnet.h"
 
-1546270658 source:e:\code\computervision\homeworkfinal\numberextract.cpp
+1546308076 source:e:\code\computervision\homeworkfinal\numberextract.cpp
 	"NumberExtract.h"
 	<cmath>
 	<queue>

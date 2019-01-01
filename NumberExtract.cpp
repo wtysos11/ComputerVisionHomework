@@ -240,12 +240,7 @@ void NumberExtract::compute()
                 marginQueue.push(make_pair(x,y));
                 inQueue[make_pair(x,y)] = true;
             }
-            data = bipaper(bipaper.width()-1-x,y);
-            if(bipaper(bipaper.width()-1-x,y) == EDGE)
-            {
-                marginQueue.push(make_pair(bipaper.width()-1-x,y));
-                inQueue[make_pair(bipaper.width()-1-x,y)] = true;
-            }
+
         }
     }
     for(int y =1;y<=1;y++)
@@ -348,6 +343,7 @@ void NumberExtract::compute()
         vector<bool> isVisited(bipaper.width(),false);
         int up = 0,down = 0;
         int ver = horiLines[i];
+        int minSquare = 60;
         vector<vector<int>> numbers;
         cout<<"lines"<<i<<" with vertical lines:"<<horiLines[i]<<"\tst:"<<st<<"\ted:"<<ed<<endl;
         vector<int> data_x;//第一次计算算出的中心点的x坐标
@@ -368,7 +364,7 @@ void NumberExtract::compute()
                     if(bipaper(x,ver-up)==EDGE)
                     {
                         vector<int> coordinate(findPoint(x,ver-up,isVisited));
-                        if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>100)
+                        if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>minSquare)
                         {
                             numbers.push_back(coordinate);
                             data_x.push_back((coordinate[0]+coordinate[2])/2);
@@ -392,7 +388,7 @@ void NumberExtract::compute()
                     if(bipaper(x,ver+down)==EDGE)
                     {
                         vector<int> coordinate(findPoint(x,ver+down,isVisited));
-                        if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>100)
+                        if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>minSquare)
                         {
                             numbers.push_back(coordinate);
                             data_x.push_back((coordinate[0]+coordinate[2])/2);
@@ -449,7 +445,7 @@ cout<<"New Vertex"<<endl;
                     if(bipaper(x,currentVerticalCenter-up)==EDGE)
                     {
                         vector<int> coordinate(findPoint(x,currentVerticalCenter-up,isVisited));
-                        if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>100)
+                        if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>minSquare)
                             numbers.push_back(coordinate);
 #ifdef DEBUG
                         for(int j = 0;j<4;j++)
@@ -468,7 +464,7 @@ cout<<"New Vertex"<<endl;
                     if(bipaper(x,currentVerticalCenter+down)==EDGE)
                     {
                         vector<int> coordinate(findPoint(x,currentVerticalCenter+down,isVisited));
-                        if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>100)
+                        if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>minSquare)
                             numbers.push_back(coordinate);
 #ifdef DEBUG
                         for(int j = 0;j<4;j++)
@@ -484,7 +480,49 @@ cout<<"New Vertex"<<endl;
             }
 
         }//end 最小二乘法反代
-
+/*切割可能重合的数字*/
+        bool valuable = true;
+        int acNum;
+        if(i%3==0 && numbers.size()<8)
+        {
+            acNum = 8;
+            valuable = false;
+        }
+        else if(i%3==1 && numbers.size()<11)
+        {
+            acNum = 11;
+            valuable = false;
+        }
+        else if(i%3==2 && numbers.size()<18)
+        {
+            acNum = 18;
+            valuable = false;
+        }
+        if(!valuable)
+        {
+            //从最大的开始切割
+            vector<pair<int,int>> widthIndex ;
+            for(int j = 0;j<numbers.size();j++)
+            {
+                widthIndex.push_back(make_pair(j,numbers[j][2]-numbers[j][0]));
+            }
+            sort(widthIndex.begin(),widthIndex.end(),[](const pair<int,int>& p1,const pair<int,int>& p2)
+                 {
+                    return p1.second>p2.second;
+                 });
+            int index = 0;
+            while(numbers.size()<acNum && index<widthIndex.size())
+            {
+                //对index位置的数字进行切割
+                int deltax = 0.5*widthIndex[index].second;
+                int point = widthIndex[index].first;
+                int coordinateX = numbers[point][0]+deltax;
+                cout<<"切割点"<<coordinateX<<endl;
+                numbers.push_back({coordinateX,numbers[point][1],numbers[point][2],numbers[point][3]});
+                numbers[point][2] = coordinateX;
+                index++;
+            }
+        }
 
         //以每个数字的最小的x坐标进行排序
         sort(numbers.begin(),numbers.end(),[](const vector<int>& v1,const vector<int>& v2)
@@ -627,8 +665,8 @@ vector<int> NumberExtract::findPoint(int xx,int yy,vector<bool>& isVisited)
     while(foundPoint)
     {
         foundPoint = false;
-        int xl = xmin - 3 < 0 ? 0 : xmin-3;
-        int xr = xmax + 3 >= bipaper.width() ? bipaper.width()-1 : xmax + 3;
+        int xl = xmin - 1 < 0 ? 0 : xmin-1;
+        int xr = xmax + 1 >= bipaper.width() ? bipaper.width()-1 : xmax + 1;
         int yl = ymin - 5 < 0 ? 0 : ymin-5;
         int yr = ymax + 5 >= bipaper.height() ? bipaper.height()-1 : ymax + 5;
         //上一区域查询
