@@ -58,7 +58,7 @@ int main(void)
         s.clear();
     }
 */
-    Solution s("test9.bmp");
+    Solution s("test6.bmp");
     s.mainProcess();
     s.clear();
     return 0;

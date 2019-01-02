@@ -53,6 +53,7 @@ public:
     void compute();
 
     void getBinaryImg();
+    void marginDelete();
     vector<int> computeVerticalGrayHist();
     vector<int> computeHorizontalGrayHist(int yl,int yh);//histogram in the range
     vector<int> getVerticallines();//get vertical center lines

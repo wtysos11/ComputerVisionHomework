@@ -31,7 +31,24 @@ int dilateXY(const CImg<int>& img, int x, int y)
         return EDGE;
 
 }
-
+int eroseXY(const CImg<int>& img, int x, int y)
+{
+    int minimum = 255;
+	for(int i = -1;i<=1;i++)
+    {
+        for(int j = -1;j<=1;j++)
+        {
+            if(x+i>=0 && y+j >= 0 && x+i < img.width() && y+j < img.width())
+            {
+                if(img(x+i,y+j)<minimum)
+                {
+                    minimum = NOEDGE;
+                }
+            }
+        }
+    }
+    return minimum;
+}
 
 
 //仿射变换矩阵求解
@@ -213,54 +230,135 @@ vector<double> LineFitLeastSquares(vector<int> data_x, vector<int> data_y)
 
 	return vector<double>{a,b};
 }
-
-
-void NumberExtract::compute()
+/*
+    边沿消除：因为hough变换始终是存在误差的，消除起来很麻烦，所以考虑到噪点集中在图像的四边，所以在四边进行连通性检测来消除噪点
+    对于连通性检测系统，如此进行：
+        对于横向的边，连通性检测以横向为主（横向半连续像素大于50，则认定为噪点连通域）
+        纵向的边同理。
+        这样的原因是就算有数字误入区域内，也可以排除掉。
+            如果有较小的噪点漏掉了，则后面会去除掉较小的噪点。
+*/
+void NumberExtract::marginDelete()
 {
-    BPnet* bp = BPnet::GetInstance();
-    ofstream fout("imageOut");
-    //处理，得到二值化图像
-    getBinaryImg();
-    /*
-    矫正因为A4纸问题引起的Margin干扰
-    */
-    /*
-    从极度边缘开始重新生长
-    */
-    //上边缘重构
     queue<pair<int,int>> marginQueue;
     map<pair<int,int>,bool> inQueue;
-    for(int x = 1;x<=1;x++)
+    int pixelLimit = 10;//半连续像素达到50，则认定为噪点
+    //对四边进行扫描
+    int pixelCount = 0;//连续计数
+    bool flag = false;
+    int x = 1;
+    int y;
+    //两侧扫描
+    for(y = 1;y<bipaper.height();y++)
     {
-        for(int y = 1;y<bipaper.height();y++)
+        if(bipaper(x,y) == EDGE)
         {
-            int data = bipaper(x,y);
-            if(bipaper(x,y) == EDGE )
+            flag = false;
+            pixelCount++;
+            if(pixelCount>pixelLimit)
             {
                 marginQueue.push(make_pair(x,y));
-                inQueue[make_pair(x,y)] = true;
             }
+        }
+        else// no edge, two chance
+        {
+            if(!flag)
+            {
+                flag = true;
+            }
+            else
+            {
+                flag = false;
+                pixelCount = 0;
+            }
+        }
+    }
+    pixelCount = 0;//连续计数
+    flag = false;
+    x = bipaper.width()-1;
+    //两侧扫描
+    for(y = 1;y<bipaper.height();y++)
+    {
+        if(bipaper(x,y) == EDGE)
+        {
+            flag = false;
+            pixelCount++;
+            if(pixelCount>pixelLimit)
+            {
+                marginQueue.push(make_pair(x,y));
+            }
+        }
+        else// no edge, two chance
+        {
+            if(!flag)
+            {
+                flag = true;
+            }
+            else
+            {
+                pixelCount = 0;
+                flag = false;
+            }
+        }
+    }
+    pixelCount = 0;//连续计数
+    flag = false;
+    y = 1;
+    //两侧扫描
+    for(x = 1;x<bipaper.width();x++)
+    {
+        if(bipaper(x,y) == EDGE)
+        {
+            flag = false;
+            pixelCount++;
+            if(pixelCount>pixelLimit)
+            {
+                marginQueue.push(make_pair(x,y));
+            }
+        }
+        else// no edge, two chance
+        {
+            if(!flag)
+            {
+                flag = true;
+            }
+            else
+            {
+                pixelCount = 0;
+                flag = false;
+            }
+        }
+    }
 
-        }
-    }
-    for(int y =1;y<=1;y++)
+    pixelCount = 0;//连续计数
+    flag = false;
+    y = bipaper.height()-1;
+    //两侧扫描
+    for(x = 1;x<bipaper.width();x++)
     {
-        for(int x = 1;x<bipaper.width();x++)
+        if(bipaper(x,y) == EDGE)
         {
-            int data = bipaper(x,y);
-            if(bipaper(x,y) == EDGE && inQueue.find(make_pair(x,y)) == inQueue.end())
+            flag = false;
+            pixelCount++;
+            if(pixelCount>pixelLimit)
             {
                 marginQueue.push(make_pair(x,y));
-                inQueue[make_pair(x,y)] = true;
             }
-            data = bipaper(x,bipaper.height()-1-y);
-            if(bipaper(x,bipaper.height()-1-y) == EDGE && inQueue.find(make_pair(x,bipaper.height()-1-y)) == inQueue.end())
+        }
+        else// no edge, two chance
+        {
+            if(!flag)
             {
-                marginQueue.push(make_pair(x,bipaper.height()-1-y));
-                inQueue[make_pair(x,bipaper.height()-1-y)] = true;
+                flag = true;
+            }
+            else
+            {
+                pixelCount = 0;
+                flag = false;
             }
         }
     }
+
     while(!marginQueue.empty())
     {
         pair<int,int> p = marginQueue.front(); marginQueue.pop();
@@ -291,12 +389,27 @@ void NumberExtract::compute()
             }
         }
     }
-    bipaper.display();
     xlMargin = 0;
     xrMargin = bipaper.width();
     cout<<"update margin x:"<<xlMargin<<"\t"<<xrMargin<<endl;
     cout<<"update margin y:"<<yuMargin<<"\t"<<ydMargin<<endl;
 
+}
+
+void NumberExtract::compute()
+{
+    BPnet* bp = BPnet::GetInstance();
+    ofstream fout("imageOut");
+    //处理，得到二值化图像
+    getBinaryImg();
+    /*
+    矫正因为A4纸问题引起的Margin干扰
+    */
+    /*
+    从极度边缘开始重新生长
+    */
+    //上边缘重构
+    marginDelete();
     //提取字符行
     vector<int> horiLines(getVerticallines());
     cachepaper = CImg<int>(a4paper.width(),a4paper.height(),1,1,0);
@@ -581,19 +694,30 @@ cout<<"New Vertex"<<endl;
                 if(digit(xx,yy)==EDGE)
                 {
                     digit(xx,yy) = 255 - origindigit(xx,yy);
-                    digit(xx,yy) = digit(xx,yy) + 70 > 255 ? 255 : digit(xx,yy) + 70;
+                    digit(xx,yy) = digit(xx,yy) + 100 > 255 ? 255 : digit(xx,yy) + 100;
                 }
                 else
                 {
                     digit(xx,yy) = 0;
                 }
             }
+            //为了解决数字中间的噪点问题，两次膨胀后腐蚀
             CImg<int> digitCache(digit);
             cimg_forXY(digit,dx,dy)
             {
                 digit(dx,dy) = dilateXY(digitCache,dx,dy);
             }
-            //digit.display();
+            /*
+            cimg_forXY(digitCache,dx,dy)
+            {
+                digitCache(dx,dy) = dilateXY(digit,dx,dy);
+            }
+
+            cimg_forXY(digit,dx,dy)
+            {
+                digit(dx,dy) = eroseXY(digitCache,dx,dy);
+            }*/
+            digitCache.clear();
             //从digit投射到28*28
             CImg<int> acNum(digitSize,digitSize,1,1,0);
             //这里没有写错，MNIST数据集的顺序就是这样子
@@ -612,11 +736,12 @@ cout<<"New Vertex"<<endl;
             fout<<endl;
 #ifdef OUTPUT
             string filename = "line"+to_string(i)+"_num_"+to_string(num_index)+".bmp";
-            digit.save(filename.c_str());
+            acNum.save(filename.c_str());
 #endif
             //int preNumber = bp->predictNum(digitData);
             //cout<<preNumber<<" ";
             digit.clear();
+            acNum.clear();
         }
         cout<<endl;
 

@@ -115,6 +115,7 @@ vector<Vertex> Hough::find4InterchangePoints()
         }
     }
     #ifdef DEBUG
+    cout<<"line run out by hough "<<endl;
     for(int i = 0;i<KP;i++)
     {
         double m1 = topkpoints[i].first;
