@@ -19,7 +19,7 @@ Hough::Hough(CImg<eleType> canny)
 		edge(x, y, 0, 0) = canny(x, y, 0, 0);
 	}
 
-	hough_space = CImg<int>(360,maxDistance,1,1,0);
+	hough_space = CImg<int>(180,maxDistance,1,1,0);
 }
 //compute entrance
 vector<Vertex> Hough::compute()
@@ -32,10 +32,10 @@ vector<Vertex> Hough::compute()
 void Hough::houghSpaceMapping()
 {
     int maxDistance = (edge.width() + edge.height()) * 2;
-    vector<double> cosCache(360);
-    vector<double> sinCache(360);
+    vector<double> cosCache(180);
+    vector<double> sinCache(180);
 
-    for(int i = 0;i<360;i++)
+    for(int i = 0;i<180;i++)
     {
         double ra = (double)i*PI/180.0;
         sinCache[i] = sin(ra);
@@ -48,9 +48,9 @@ void Hough::houghSpaceMapping()
             cimg_forX(hough_space,angle)
             {
                 int polar = (int)(x*cosCache[angle]+y*sinCache[angle]);
-                if( polar >= 0 && polar < maxDistance )
+                if( polar >= -0.5*maxDistance && polar < 0.5*maxDistance )
                 {
-                    hough_space(angle,polar) ++;
+                    hough_space(angle,polar+0.5*maxDistance) ++;
                 }
             }
         }
@@ -80,8 +80,10 @@ vector<Vertex> Hough::find4InterchangePoints()
 //first, find top 13 points in hough space using insert sort
     vector<int> ranking;//store weight
     vector<pair<double,double>> topkpoints;//store lines data
-    cimg_forXY(hough_space,angle,polar)
+    int maxDistance = (edge.width() + edge.height()) * 2;
+    cimg_forXY(hough_space,angle,p)
     {
+        int polar = p - 0.5*maxDistance;
         if(ranking.size()<KP)
         {
             double ra = (double)angle*PI/180.0;//real angle
@@ -93,11 +95,11 @@ vector<Vertex> Hough::find4InterchangePoints()
                 b = (double) polar / cos(ra);
             }
 
-            ranking.push_back(hough_space(angle,polar));
+            ranking.push_back(hough_space(angle,p));
             topkpoints.push_back(make_pair(m,b));
             maintainArray(ranking,topkpoints);
         }
-        else if(hough_space(angle,polar)>ranking[KP-1])
+        else if(hough_space(angle,p)>ranking[KP-1])
         {
             double ra = (double)angle*PI/180.0;//real angle
             double m = -cos(ra)/sin(ra);
@@ -107,11 +109,27 @@ vector<Vertex> Hough::find4InterchangePoints()
                 m = 0;
                 b = (double) polar / cos(ra);
             }
-            ranking[KP-1] = hough_space(angle,polar);
+            ranking[KP-1] = hough_space(angle,p);
             topkpoints[KP-1] = make_pair(m,b);
             maintainArray(ranking,topkpoints);
         }
     }
+    #ifdef DEBUG
+    for(int i = 0;i<KP;i++)
+    {
+        double m1 = topkpoints[i].first;
+        double b1 = topkpoints[i].second;
+        if(m1==0)
+        {
+            cout<<"line: x = "<<b1;
+        }
+        else
+        {
+            cout<<"line: y = "<<m1<<" * x + "<<b1;
+        }
+        cout<<" with ranking "<<ranking[i]<<endl;
+    }
+    #endif // DEBUG
 
 //lines votes for 4 interchange points
 /*
