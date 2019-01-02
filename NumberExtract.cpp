@@ -474,7 +474,7 @@ void NumberExtract::compute()
                 if(ver-up>st)
                 {
                     //25¡⁄”Ú’“µ„
-                    if(bipaper(x,ver-up)==EDGE)
+                    if(bipaper(x,ver-up)==EDGE && !isVisited[x])
                     {
                         vector<int> coordinate(findPoint(x,ver-up,isVisited));
                         if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>minSquare)
@@ -498,7 +498,7 @@ void NumberExtract::compute()
                 //try to find point down
                 if(ver+down<ed)
                 {
-                    if(bipaper(x,ver+down)==EDGE)
+                    if(bipaper(x,ver+down)==EDGE && !isVisited[x])
                     {
                         vector<int> coordinate(findPoint(x,ver+down,isVisited));
                         if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>minSquare)
@@ -555,7 +555,7 @@ cout<<"New Vertex"<<endl;
                 if(up<uplimit)
                 {
                     //25¡⁄”Ú’“µ„
-                    if(bipaper(x,currentVerticalCenter-up)==EDGE)
+                    if(bipaper(x,currentVerticalCenter-up)==EDGE && !isVisited[x])
                     {
                         vector<int> coordinate(findPoint(x,currentVerticalCenter-up,isVisited));
                         if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>minSquare)
@@ -574,7 +574,7 @@ cout<<"New Vertex"<<endl;
                 //try to find point down
                 if(down<downlimit)
                 {
-                    if(bipaper(x,currentVerticalCenter+down)==EDGE)
+                    if(bipaper(x,currentVerticalCenter+down)==EDGE && !isVisited[x])
                     {
                         vector<int> coordinate(findPoint(x,currentVerticalCenter+down,isVisited));
                         if((coordinate[2]-coordinate[0])*(coordinate[3]-coordinate[1])>minSquare)
