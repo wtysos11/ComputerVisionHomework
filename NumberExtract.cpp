@@ -260,6 +260,15 @@ void NumberExtract::marginDelete()
                 marginQueue.push(make_pair(x,y));
             }
         }
+        else if(bipaper(x+1,y) == EDGE)
+        {
+            flag = false;
+            pixelCount++;
+            if(pixelCount>pixelLimit)
+            {
+                marginQueue.push(make_pair(x+1,y));
+            }
+        }
         else// no edge, two chance
         {
             if(!flag)
@@ -286,6 +295,15 @@ void NumberExtract::marginDelete()
             if(pixelCount>pixelLimit)
             {
                 marginQueue.push(make_pair(x,y));
+            }
+        }
+        else if(bipaper(x-1,y)==EDGE)
+        {
+            flag = false;
+            pixelCount++;
+            if(pixelCount>pixelLimit)
+            {
+                marginQueue.push(make_pair(x-1,y));
             }
         }
         else// no edge, two chance
@@ -316,6 +334,15 @@ void NumberExtract::marginDelete()
                 marginQueue.push(make_pair(x,y));
             }
         }
+        else if(bipaper(x,y+1)==EDGE)
+        {
+            flag = false;
+            pixelCount++;
+            if(pixelCount>pixelLimit)
+            {
+                marginQueue.push(make_pair(x,y+1));
+            }
+        }
         else// no edge, two chance
         {
             if(!flag)
@@ -343,6 +370,15 @@ void NumberExtract::marginDelete()
             if(pixelCount>pixelLimit)
             {
                 marginQueue.push(make_pair(x,y));
+            }
+        }
+        else if(bipaper(x,y-1)==EDGE)
+        {
+            flag = false;
+            pixelCount++;
+            if(pixelCount>pixelLimit)
+            {
+                marginQueue.push(make_pair(x,y-1));
             }
         }
         else// no edge, two chance
@@ -398,8 +434,12 @@ void NumberExtract::marginDelete()
 
 void NumberExtract::compute()
 {
+
+    string baseDireAddress = "./img/"+filename;
+	if (_access(baseDireAddress.c_str(), 0) == -1)
+		_mkdir(baseDireAddress.c_str());
     BPnet* bp = BPnet::GetInstance();
-    ofstream fout("imageOut");
+    ofstream fout(filename+"_out");
     //处理，得到二值化图像
     getBinaryImg();
     /*
@@ -410,6 +450,7 @@ void NumberExtract::compute()
     */
     //上边缘重构
     marginDelete();
+    bipaper.display();
     //提取字符行
     vector<int> horiLines(getVerticallines());
     cachepaper = CImg<int>(a4paper.width(),a4paper.height(),1,1,0);
@@ -735,7 +776,8 @@ cout<<"New Vertex"<<endl;
             //acNum.display();
             fout<<endl;
 #ifdef OUTPUT
-            string filename = "line"+to_string(i)+"_num_"+to_string(num_index)+".bmp";
+            string filename = baseDireAddress+"/line"+to_string(i)+"_num_"+to_string(num_index)+".bmp";
+            cout<<filename<<endl;
             acNum.save(filename.c_str());
 #endif
             //int preNumber = bp->predictNum(digitData);
@@ -785,86 +827,28 @@ vector<int> NumberExtract::findPoint(int xx,int yy,vector<bool>& isVisited)
 {
     int xmin = xx,ymin = yy;
     int xmax = xx,ymax = yy;
-    bool foundPoint = true;
-    bool findUp = true,findLeft = true,findRight = true,findDown = true;
-    while(foundPoint)
+    queue<pair<int,int>> q;
+    map<pair<int,int>,bool> visit;
+    int deltaX = 2,deltaY = 8;
+    q.push(make_pair(xx,yy));
+    visit[make_pair(xx,yy)] = true;
+    while(!q.empty())
     {
-        foundPoint = false;
-        int xl = xmin - 1 < 0 ? 0 : xmin-1;
-        int xr = xmax + 1 >= bipaper.width() ? bipaper.width()-1 : xmax + 1;
-        int yl = ymin - 5 < 0 ? 0 : ymin-5;
-        int yr = ymax + 5 >= bipaper.height() ? bipaper.height()-1 : ymax + 5;
-        //上一区域查询
-        if(findUp)
+        pair<int,int> p = q.front();q.pop();
+        for(int x = p.first-deltaX;x<=p.first+deltaX;x++)
         {
-            //findUp = false;
-            for(int x = xl;x<=xr;x++)
+            for(int y = p.second - deltaY;y<=p.second+deltaY;y++)
             {
-                for(int y = yl;y<ymin;y++)
+                if(bipaper(x,y) == EDGE && visit.find(make_pair(x,y)) == visit.end())
                 {
-                    if(bipaper(x,y)==EDGE)
-                    {
-                        updatePoint(xmin,xmax,ymin,ymax,x,y);
-                        foundPoint = true;
-                        findUp = true;
-                    }
-
+                    visit[make_pair(x,y)] = true;
+                    q.push(make_pair(x,y));
+                    updatePoint(xmin,xmax,ymin,ymax,x,y);
                 }
             }
         }
-
-        if(findLeft)
-        {
-            //findLeft = false;
-            for(int x = xl;x<xmin;x++)
-            {
-                for(int y = ymin;y<=ymax;y++)
-                {
-                    if(bipaper(x,y)==EDGE)
-                    {
-                        updatePoint(xmin,xmax,ymin,ymax,x,y);
-                        foundPoint = true;
-                        findLeft = true;
-                    }
-                }
-            }
-        }
-
-        if(findRight)
-        {
-            //findRight = false;
-            for(int x = xmax +1;x<=xr;x++)
-            {
-                for(int y = ymin;y<=ymax;y++)
-                {
-                    if(bipaper(x,y)==EDGE)
-                    {
-                        updatePoint(xmin,xmax,ymin,ymax,x,y);
-                        foundPoint = true;
-                        findRight = true;
-                    }
-                }
-            }
-        }
-
-        if(findDown)
-        {
-            //findDown = false;
-            for(int x = xl;x<=xr;x++)
-            {
-                for(int y = ymax +1;y<=yr;y++)
-                {
-                    if(bipaper(x,y)==EDGE)
-                    {
-                        updatePoint(xmin,xmax,ymin,ymax,x,y);
-                        foundPoint = true;
-                        findDown = true;
-                    }
-                }
-            }
-        }
-
     }
+
     for(int i = xmin;i<=xmax;i++)
     {
         isVisited[i] = true;
@@ -897,7 +881,8 @@ void NumberExtract::getBinaryImg()
         }
     }
 #ifdef DEBUG
-cache.display();
+    cache.display();
+    a4paper.display();
 #endif // DEBUG
     cimg_forXY(bipaper,x,y)
     {

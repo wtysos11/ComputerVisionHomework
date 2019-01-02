@@ -29,7 +29,7 @@ struct Solution{
 
     void mainProcess()
     {
-        source = CImg<int>(filename.c_str());
+        source = CImg<int>((filename+".bmp").c_str());
         gray = makeGrayImage(source);
         downsampleImg = downSample(gray, DownSampledSquareSize);
         cannyImage = canny(downsampleImg, downsampleImg.width(), downsampleImg.height());
@@ -45,7 +45,7 @@ struct Solution{
 #endif
 
         a4Image = transformToA4(source,downsampleImg.width(),downsampleImg.height(),top4);
-        NumberExtract num(a4Image);
+        NumberExtract num(a4Image,filename);
         num.compute();
 
         num.clear();

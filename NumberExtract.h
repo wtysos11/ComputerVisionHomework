@@ -7,11 +7,12 @@
 #include <utility>
 #include <string>
 #include <fstream>
+#include <direct.h>
 #include "BPnet.h"
 #define DEBUG
 #define OUTPUT
 //二值化图像的分界点
-#define BITHRESHOLD 135
+#define BITHRESHOLD 120
 //垂直灰度直方图的顶点阈值
 #define VERTICAL_GRAY_THRESHOLD 10
 #define MARGIN 0.05//A4提取误差边缘
@@ -24,8 +25,10 @@ struct NumberExtract
 {
 public:
     CImg<int> a4paper,bipaper,anspaper,cachepaper;
-    NumberExtract(CImg<int> a4)
+    string filename;
+    NumberExtract(CImg<int> a4,string fname)
     {
+        filename = fname;
         a4paper = a4;
         xlMargin = MARGIN * a4paper.width();
         xrMargin = a4paper.width() - xlMargin;
